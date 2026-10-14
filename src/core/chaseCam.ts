@@ -17,3 +17,10 @@ export function chaseOffset(target: Vec3, yaw: number, distance: number, height:
 export function followFactor(dt: number, sharpness: number): number {
   return 1 - Math.exp(-sharpness * dt);
 }
+
+/** Exponential smoothing for angles (radians) that wraps the short way around ±π. */
+export function smoothAngle(current: number, target: number, factor: number): number {
+  let delta = target - current;
+  delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+  return current + delta * factor;
+}

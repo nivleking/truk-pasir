@@ -26,6 +26,14 @@ describe('round', () => {
     expect(r.state).toBe('hauling');
   });
 
+  it('goes back to loading if the truck returns under the hopper', () => {
+    const r = createRound({ dumpAngle: 25, settleSeconds: 2 });
+    step(r, 1, { loaded: 5, bedUnderHopper: true });
+    step(r, 1, { loaded: 5 });
+    step(r, 1, { loaded: 5, bedUnderHopper: true });
+    expect(r.state).toBe('loading');
+  });
+
   it('only counts as dumping with the bed raised inside the zone', () => {
     const r = createRound({ dumpAngle: 25, settleSeconds: 2 });
     step(r, 1, { loaded: 100, bedUnderHopper: true });
@@ -69,5 +77,35 @@ describe('round', () => {
     expect(r.state).toBe('ready');
     expect(r.seconds).toBe(0);
     expect(r.result).toBeNull();
+  });
+});
+
+describe('round with manual finish (team mode)', () => {
+  const base = { loaded: 100, delivered: 0, bedUnderHopper: false, bedInZone: true, bedAngle: 0 };
+  const toSettling = () => {
+    const r = createRound({ dumpAngle: 25, settleSeconds: 1, manualFinish: true });
+    r.update(0.1, { ...base, bedUnderHopper: true });
+    r.update(0.1, base);
+    r.update(0.1, { ...base, bedAngle: 40 });
+    r.update(0.1, base);
+    return r;
+  };
+  it('stays in settling and keeps counting time until finish is pressed', () => {
+    const r = toSettling();
+    expect(r.state).toBe('settling');
+    const t = r.seconds;
+    for (let i = 0; i < 50; i++) r.update(0.1, base);
+    expect(r.state).toBe('settling');
+    expect(r.seconds).toBeCloseTo(t + 5);
+  });
+  it('finishes settleSeconds after finish is pressed, without counting the wait', () => {
+    const r = toSettling();
+    r.update(0.1, base);
+    const t = r.seconds;
+    r.update(0.1, { ...base, finishPressed: true });
+    for (let i = 0; i < 12; i++) r.update(0.1, { ...base, delivered: 90 });
+    expect(r.state).toBe('finished');
+    expect(r.seconds).toBeCloseTo(t);
+    expect(r.result?.percent).toBe(90);
   });
 });

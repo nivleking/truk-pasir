@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { driveForces, isOutOfBounds } from '../../src/core/drive';
 
 const cfg = { engineForce: 100, brakeForce: 10, coastBrake: 2, reverseFactor: 0.4 };
-const cmd = (throttle: number, handbrake = false) => ({ throttle, steer: 0, handbrake, bed: 0 });
+const cmd = (throttle: number, handbrake = false) => ({ throttle, steer: 0, handbrake, bed: 0, tilt: 0 });
 
 describe('driveForces', () => {
   it('applies engine force forward when pressing W', () => {

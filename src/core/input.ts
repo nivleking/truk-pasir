@@ -7,6 +7,8 @@ export interface DriveCommands {
   handbrake: boolean;
   /** 1 raise bed, -1 lower, 0 hold */
   bed: number;
+  /** Loader bucket: 1 tilt forward (dump), -1 tilt back, 0 hold */
+  tilt: number;
 }
 
 const has = (keys: ReadonlySet<string>, ...codes: string[]) => codes.some((c) => keys.has(c));
@@ -22,6 +24,7 @@ export function commandsFromKeys(keys: ReadonlySet<string>): DriveCommands {
     steer: left - right,
     handbrake: keys.has('Space'),
     bed: (keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') ? 1 : 0),
+    tilt: (keys.has('KeyX') ? 1 : 0) - (keys.has('KeyZ') ? 1 : 0),
   };
 }
 

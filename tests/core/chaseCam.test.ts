@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chaseOffset, followFactor } from '../../src/core/chaseCam';
+import { chaseOffset, followFactor, smoothAngle } from '../../src/core/chaseCam';
 
 describe('chaseOffset', () => {
   it('sits behind and above a truck facing +Z', () => {
@@ -27,5 +27,16 @@ describe('followFactor', () => {
     const one = followFactor(0.1, 5);
     const half = followFactor(0.05, 5);
     expect(1 - (1 - half) ** 2).toBeCloseTo(one);
+  });
+});
+
+describe('smoothAngle', () => {
+  it('moves toward the target by the given factor', () => {
+    expect(smoothAngle(0, 1, 0.5)).toBeCloseTo(0.5);
+  });
+
+  it('takes the short way around across ±π', () => {
+    const a = smoothAngle(Math.PI - 0.1, -Math.PI + 0.1, 0.5);
+    expect(Math.abs(a)).toBeCloseTo(Math.PI);
   });
 });

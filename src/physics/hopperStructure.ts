@@ -3,16 +3,14 @@ import type { Rapier } from './world';
 
 /** Sand hopper (corong) the truck drives under. Spout position is where grains appear. */
 export const HOPPER = {
-  position: { x: 0, z: 22 },
   spoutHeight: 5.2,
   legHalfSpacing: 2.6,
   legHeight: 6,
   zoneRadius: 1.8,
 } as const;
 
-export function createHopperStructure(rapier: Rapier, world: RAPIER.World) {
-  const ground = world.createRigidBody(rapier.RigidBodyDesc.fixed());
-  const { x, z } = HOPPER.position;
+export function createHopperStructure(rapier: Rapier, world: RAPIER.World, ground: RAPIER.RigidBody, at: { x: number; z: number }) {
+  const { x, z } = at;
   const s = HOPPER.legHalfSpacing;
   for (const [dx, dz] of [[s, s], [-s, s], [s, -s], [-s, -s]] as const) {
     world.createCollider(
@@ -22,6 +20,6 @@ export function createHopperStructure(rapier: Rapier, world: RAPIER.World) {
   }
 }
 
-export function spoutPosition() {
-  return { x: HOPPER.position.x, y: HOPPER.spoutHeight, z: HOPPER.position.z };
+export function spoutPosition(at: { x: number; z: number }) {
+  return { x: at.x, y: HOPPER.spoutHeight, z: at.z };
 }

@@ -50,4 +50,14 @@ describe('dumpBed', () => {
     bed.update(1, 1);
     expect(bed.isDumping(25)).toBe(true);
   });
+
+  it('supports a negative minimum (e.g. loader arm below horizontal), starting there', () => {
+    const arm = createDumpBed({ minAngle: -20, maxAngle: 60, speed: 40 });
+    expect(arm.angle).toBe(-20);
+    expect(arm.state).toBe('down');
+    arm.update(1, 1);
+    expect(arm.angle).toBe(20);
+    arm.update(5, -1);
+    expect(arm.angle).toBe(-20);
+  });
 });

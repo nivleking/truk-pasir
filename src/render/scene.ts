@@ -39,34 +39,7 @@ export function createScene(container: HTMLElement): SceneHandles {
   sun.shadow.normalBias = 0.05;
   scene.add(sun, sun.target);
 
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.MeshStandardMaterial({ color: 0xc9a66b }),
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // Scattered rocks give a sense of speed (thin grid lines shimmered while moving).
-  const rockCount = 120;
-  const rocks = new THREE.InstancedMesh(
-    new THREE.DodecahedronGeometry(0.35),
-    new THREE.MeshStandardMaterial({ color: 0x7d6440, flatShading: true }),
-    rockCount,
-  );
-  const m = new THREE.Matrix4();
-  let seed = 7;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < rockCount; i++) {
-    const x = (rand() * 2 - 1) * (MAP_HALF_SIZE - 3);
-    const z = (rand() * 2 - 1) * (MAP_HALF_SIZE - 3);
-    const sc = 0.5 + rand();
-    m.compose(new THREE.Vector3(x, 0.1, z), new THREE.Quaternion(), new THREE.Vector3(sc, sc * 0.6, sc));
-    rocks.setMatrixAt(i, m);
-  }
-  rocks.receiveShadow = true;
-  scene.add(rocks);
-
+  // Ground, pit and rocks are per level: see render/levelMesh.ts.
   const bermMat = new THREE.MeshStandardMaterial({ color: 0x9c7a45 });
   const e = MAP_HALF_SIZE;
   for (const [x, z, w, d] of [[0, e, e * 2, 2], [0, -e, e * 2, 2], [e, 0, 2, e * 2], [-e, 0, 2, e * 2]] as const) {

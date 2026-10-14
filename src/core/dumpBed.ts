@@ -1,6 +1,8 @@
 export type BedState = 'down' | 'raising' | 'holding' | 'lowering' | 'up';
 
 export interface DumpBedConfig {
+  /** Degrees, default 0. The bed starts here. */
+  minAngle?: number;
   /** Degrees */
   maxAngle: number;
   /** Degrees per second while a key is held */
@@ -16,7 +18,8 @@ export interface DumpBed {
 }
 
 export function createDumpBed(cfg: DumpBedConfig): DumpBed {
-  let angle = 0;
+  const min = cfg.minAngle ?? 0;
+  let angle = min;
   let state: BedState = 'down';
 
   return {
@@ -27,8 +30,8 @@ export function createDumpBed(cfg: DumpBedConfig): DumpBed {
       return state;
     },
     update(dt, input) {
-      angle = Math.min(cfg.maxAngle, Math.max(0, angle + Math.sign(input) * cfg.speed * dt));
-      if (angle === 0) state = 'down';
+      angle = Math.min(cfg.maxAngle, Math.max(min, angle + Math.sign(input) * cfg.speed * dt));
+      if (angle === min) state = 'down';
       else if (angle === cfg.maxAngle) state = 'up';
       else if (input > 0) state = 'raising';
       else if (input < 0) state = 'lowering';

@@ -10,7 +10,7 @@ export async function createWorld(): Promise<{ rapier: Rapier; world: RAPIER.Wor
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
 
   const ground = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-  world.createCollider(RAPIER.ColliderDesc.cuboid(100, 0.1, 100).setTranslation(0, -0.1, 0), ground);
+  // The ground slab itself is built per level (it has a hole for the dump pit), see physics/level.ts.
 
   // Earth berms around the edge so the truck cannot drive off the map.
   const edge = MAP_HALF_SIZE;

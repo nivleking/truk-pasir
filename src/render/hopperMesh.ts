@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { HOPPER } from '../physics/hopperStructure';
 
-export function createHopperMesh(): THREE.Group {
+export function createHopperMesh(at: { x: number; z: number }): THREE.Group {
   const g = new THREE.Group();
   const steel = new THREE.MeshStandardMaterial({ color: 0x6b7680, metalness: 0.3, roughness: 0.6 });
-  const { x, z } = HOPPER.position;
+  const { x, z } = at;
   const s = HOPPER.legHalfSpacing;
   for (const [dx, dz] of [[s, s], [-s, s], [s, -s], [-s, -s]] as const) {
     const leg = new THREE.Mesh(new THREE.BoxGeometry(0.4, HOPPER.legHeight, 0.4), steel);

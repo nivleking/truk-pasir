@@ -2,8 +2,8 @@ import type RAPIER from '@dimforge/rapier3d-compat';
 import type { Rapier } from './world';
 
 export const SAND = {
-  poolSize: 400,
-  radius: 0.14,
+  poolSize: 800,
+  radius: 0.11,
   density: 1600,
   friction: 0.9,
 } as const;

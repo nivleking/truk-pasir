@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Truk Pasir</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
     <style>
       html, body { margin: 0; height: 100%; overflow: hidden; background: #87b5d9; }
       #app { width: 100%; height: 100%; }
@@ -14,9 +17,96 @@
       #result { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 24px 36px; border-radius: 12px;
         background: rgba(20,20,20,.85); color: #fff; font: 500 18px system-ui, sans-serif; text-align: center; line-height: 1.6; }
       #result[hidden] { display: none; }
+      #result .stars { font-size: 28px; color: #e8b923; letter-spacing: 4px; }
       #result .rank { font-size: 64px; font-weight: 800; color: #e8b923; line-height: 1.1; }
       #result small { opacity: .7; }
       #result .hint { margin-top: 8px; font-size: 14px; opacity: .7; }
+      #result .place { color: #e8b923; font-weight: 700; }
+      /* ---------- Menu: a site office job board over the live 3D yard ---------- */
+      :root { --hz: #f2b51b; --ink: #17140f; --paper: #efe6d2; --paper-2: #e3d7bc; --rust: #b4471f; --line: #2a241b; }
+      #menu { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 620px);
+        gap: 40px; align-items: center; padding: 40px 56px; box-sizing: border-box; overflow-y: auto;
+        background: linear-gradient(90deg, rgba(18,14,8,.92) 0%, rgba(18,14,8,.7) 45%, rgba(18,14,8,.35) 100%);
+        font: 500 16px 'Barlow Condensed', 'Arial Narrow', sans-serif; color: var(--paper); }
+      #menu[hidden], #menu [hidden] { display: none !important; }
+      .brand .stripe { height: 14px; width: 220px; margin-bottom: 22px;
+        background: repeating-linear-gradient(-45deg, var(--hz) 0 14px, var(--ink) 14px 28px); }
+      .brand h1 { margin: 0; font: 400 clamp(56px, 8vw, 104px)/.86 'Bungee', Impact, sans-serif; color: var(--hz);
+        text-shadow: 4px 4px 0 var(--ink), 6px 6px 0 rgba(0,0,0,.35); }
+      .brand h1 span { display: block; color: var(--paper); }
+      .brand p { max-width: 340px; margin: 18px 0 28px; font-size: 19px; line-height: 1.3; color: #cfc4ad; }
+      .brand .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 15px; color: #b9ae97; max-width: 380px; }
+      kbd { display: inline-block; min-width: 18px; padding: 2px 6px; margin-right: 3px; text-align: center;
+        font: 600 13px 'Barlow Condensed', sans-serif; color: var(--ink); background: var(--paper);
+        border-radius: 3px; box-shadow: 0 2px 0 #9b8f76; }
+
+      .sheet { position: relative; background: var(--paper); color: var(--ink); padding: 26px 28px 24px;
+        box-shadow: 10px 10px 0 rgba(0,0,0,.35); transform: rotate(.4deg);
+        background-image: repeating-linear-gradient(0deg, transparent 0 31px, rgba(40,30,10,.07) 31px 32px); }
+      .sheet::before { content: ''; position: absolute; top: -12px; left: 50%; width: 120px; height: 24px; margin-left: -60px;
+        background: #6d6658; border-radius: 4px 4px 0 0; box-shadow: inset 0 -4px 0 #4a443a; }
+      .sheet header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid var(--ink);
+        padding-bottom: 8px; margin-bottom: 16px; }
+      .sheet header h2 { margin: 0; font: 400 26px 'Bungee', Impact, sans-serif; letter-spacing: 1px; }
+      .sheet header small { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: #6a5d45; }
+      .field { margin-bottom: 16px; }
+      .field > label, .field > .label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 700;
+        letter-spacing: 2px; text-transform: uppercase; color: #6a5d45; }
+      #menu input#player-name { width: 100%; box-sizing: border-box; padding: 6px 2px; font: 600 26px 'Barlow Condensed', sans-serif;
+        color: var(--ink); background: transparent; border: 0; border-bottom: 2px dashed #8a7c60; outline: none; }
+      #menu input#player-name:focus { border-bottom-color: var(--rust); }
+
+      #level-picker, #vehicle-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      #menu button.vehicle { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 4px;
+        padding: 10px 12px 12px; background: var(--paper-2); border: 2px solid var(--line); position: relative;
+        transition: transform .08s, box-shadow .08s; }
+      #menu button.vehicle:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--line); }
+      #menu button.vehicle.selected { background: var(--hz); box-shadow: 4px 4px 0 var(--line); transform: translate(-2px, -2px); }
+      #menu button.vehicle:focus-visible { outline: 3px solid var(--rust); outline-offset: 2px; }
+      #menu button.vehicle strong { font: 400 15px 'Bungee', Impact, sans-serif; line-height: 1.1; }
+      #menu button.vehicle span { font-size: 14px; line-height: 1.2; color: #3d3527; }
+      #menu button.vehicle em { margin-top: auto; padding-top: 4px; font: 700 14px 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: 1px; }
+      #menu button.vehicle .num { position: absolute; top: 6px; right: 8px; font: 400 22px 'Bungee', sans-serif; opacity: .18; }
+      #menu button.vehicle:disabled { cursor: not-allowed; background: repeating-linear-gradient(-45deg, #d8ccb1 0 8px, #cfc2a5 8px 16px); color: #7d7260; }
+      #menu button.vehicle:disabled span { color: #7d7260; }
+      #menu button.vehicle .bar { height: 6px; background: rgba(23,20,15,.15); margin-top: 6px; }
+      #menu button.vehicle .bar i { display: block; height: 100%; background: var(--ink); }
+      #menu label.helper { display: flex; gap: 10px; align-items: center; margin: 12px 0 0; font-size: 16px; cursor: pointer; }
+      #menu label.helper input { width: 18px; height: 18px; accent-color: var(--rust); margin: 0; }
+
+      .actions { display: flex; gap: 12px; margin-top: 20px; }
+      #menu .actions button, #btn-back { font: 400 20px 'Bungee', Impact, sans-serif; padding: 14px 22px; border: 3px solid var(--ink);
+        cursor: pointer; letter-spacing: 1px; transition: transform .08s, box-shadow .08s; }
+      #menu button.primary { flex: 1; background: var(--ink); color: var(--hz); box-shadow: 5px 5px 0 var(--rust); }
+      #menu button.primary:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--rust); }
+      #menu button.primary:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--rust); }
+      #btn-scores, #btn-back { background: transparent; color: var(--ink); }
+      #btn-scores:hover, #btn-back:hover { background: var(--paper-2); }
+
+      #menu table { border-collapse: collapse; width: 100%; font-size: 17px; }
+      #menu th { text-align: left; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6a5d45;
+        border-bottom: 3px solid var(--ink); padding: 4px 6px; }
+      #menu td { padding: 7px 6px; border-bottom: 1px dashed #b3a588; }
+      #menu tbody tr:first-child td { font-weight: 700; }
+      #menu tbody tr:first-child td:first-child { color: var(--rust); }
+      #menu td.empty { text-align: center; padding: 24px; color: #6a5d45; }
+
+      #menu button.vehicle .off { opacity: .25; }
+      body.in-menu #hud, body.in-menu #status { display: none; }
+      #result { background: var(--paper); color: var(--ink); border-radius: 0; box-shadow: 8px 8px 0 rgba(0,0,0,.4);
+        font-family: 'Barlow Condensed', sans-serif; border-top: 12px solid transparent;
+        border-image: repeating-linear-gradient(-45deg, var(--hz) 0 12px, var(--ink) 12px 24px) 12; }
+      #result .rank { font-family: 'Bungee', Impact, sans-serif; font-weight: 400; color: var(--rust); }
+      #result .stars, #result .place { color: var(--ink); }
+      #hud, #status { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; border-radius: 0; background: rgba(23,20,15,.8); }
+      @media (max-width: 900px) {
+        #menu { grid-template-columns: 1fr; gap: 24px; padding: 28px 16px; align-items: start;
+          background: rgba(18,14,8,.88); }
+        .brand .keys { display: none; }
+        .brand p { margin-bottom: 0; }
+        .sheet { transform: none; box-shadow: 5px 5px 0 rgba(0,0,0,.35); margin-right: 5px; }
+      }
+      @media (max-width: 560px) { #level-picker, #vehicle-picker { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
@@ -24,6 +114,53 @@
     <div id="hud"></div>
     <div id="status"></div>
     <div id="result" hidden></div>
+    <div id="menu" hidden>
+      <section class="brand">
+        <div class="stripe"></div>
+        <h1>TRUK<span>PASIR</span></h1>
+        <p>Isi muatan di corong, bawa lewat jalur proyek, tumpahkan ke lubang. Jangan sampai ada yang tercecer.</p>
+        <div class="keys">
+          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>jalan dan belok</span>
+          <span><kbd>Spasi</kbd></span><span>rem</span>
+          <span><kbd>E</kbd><kbd>Q</kbd></span><span>angkat / turunkan bak atau lengan</span>
+          <span><kbd>X</kbd><kbd>Z</kbd></span><span>tuang / tarik sendok loader</span>
+          <span><kbd>Tab</kbd><kbd>Enter</kbd></span><span>ganti kendaraan / selesai (mode tim)</span>
+          <span><kbd>Drag</kbd><kbd>C</kbd></span><span>lihat sekeliling / reset kamera</span>
+          <span><kbd>R</kbd><kbd>M</kbd></span><span>ulang / menu</span>
+        </div>
+      </section>
+
+      <div class="sheet">
+        <div id="menu-main">
+          <header><h2>Surat Jalan</h2><small>Proyek Urugan</small></header>
+          <div class="field">
+            <label for="player-name">Sopir</label>
+            <input id="player-name" maxlength="12" autocomplete="off" placeholder="Nama kamu" />
+          </div>
+          <div class="field">
+            <span class="label">Lokasi</span>
+            <div id="level-picker"></div>
+          </div>
+          <div class="field">
+            <span class="label">Armada</span>
+            <div id="vehicle-picker"></div>
+            <label id="helper-row" class="helper"><input type="checkbox" id="helper-loader" /> Bawa wheel loader untuk korek sisa pasir</label>
+          </div>
+          <div class="actions">
+            <button id="btn-play" class="primary">Berangkat</button>
+            <button id="btn-scores">Rekor</button>
+          </div>
+        </div>
+        <div id="menu-scores" hidden>
+          <header><h2>Papan Rekor</h2><small>10 terbaik</small></header>
+          <table>
+            <thead><tr><th>#</th><th>Sopir</th><th>Skor</th><th>Lokasi</th><th>Armada</th><th>Sampai</th><th>Waktu</th><th>Tanggal</th></tr></thead>
+            <tbody id="score-rows"></tbody>
+          </table>
+          <div class="actions"><button id="btn-back">Kembali</button></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
