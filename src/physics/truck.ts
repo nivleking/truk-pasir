@@ -14,7 +14,7 @@ export const TRUCK = {
   engineForce: 32000,
   brakeForce: 400,
   coastBrake: 60,
-  reverseFactor: 0.4,
+  reverseFactor: 0.6,
   maxSteer: 0.5,
   /** Wheel positions relative to chassis center: 2 steering front, 4 driven rear. */
   wheels: [

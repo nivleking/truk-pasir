@@ -5,6 +5,7 @@ import { createDumpBed } from './core/dumpBed';
 import { createFixedStep } from './core/fixedStep';
 import { createHopper, isUnder } from './core/hopper';
 import { commandsFromKeys, smoothSteer } from './core/input';
+import { createRound, type RoundState } from './core/round';
 import { BED, createBed } from './physics/bed';
 import { createHopperStructure, HOPPER, spoutPosition } from './physics/hopperStructure';
 import { createSandPool } from './physics/sand';
@@ -15,8 +16,21 @@ import { createHopperMesh } from './render/hopperMesh';
 import { createSandMesh } from './render/sandMesh';
 import { createScene } from './render/scene';
 import { createTruckMesh } from './render/truckMesh';
+import { createZoneMesh } from './render/zoneMesh';
 
 const STEP = 1 / 60;
+const DUMP_ANGLE = 25;
+/** Dump zone (zona tuang). */
+const ZONE = { x: 26, z: -20, radius: 4 };
+
+const STATE_TEXT: Record<RoundState, string> = {
+  ready: 'Isi pasir: berhenti dengan bak di bawah corong',
+  loading: 'Mengisi pasir...',
+  hauling: 'Mundur ke zona hijau (pasir keluar dari belakang), lalu angkat bak (E)',
+  dumping: 'Menuang! Turunkan bak (Q) kalau sudah kosong',
+  settling: 'Menghitung pasir...',
+  finished: 'Selesai!',
+};
 
 /** Previous + current physics pose of a body, so rendering can interpolate between steps. */
 function createPoseTracker(read: () => { t: RAPIER_Vec; r: RAPIER_Quat }) {
@@ -52,7 +66,9 @@ type RAPIER_Quat = RAPIER_Vec & { w: number };
 async function start() {
   const container = document.getElementById('app');
   const hud = document.getElementById('hud');
-  if (!container || !hud) throw new Error('#app/#hud not found');
+  const status = document.getElementById('status');
+  const resultBox = document.getElementById('result');
+  if (!container || !hud || !status || !resultBox) throw new Error('HUD elements not found');
 
   const { renderer, scene, camera, followSun } = createScene(container);
   const { rapier, world } = await createWorld();
@@ -66,11 +82,31 @@ async function start() {
   const truckMesh = createTruckMesh();
   const bedMesh = createBedMesh();
   const sandMesh = createSandMesh();
-  scene.add(truckMesh.root, ...truckMesh.wheels, bedMesh, sandMesh.mesh, createHopperMesh());
+  scene.add(
+    truckMesh.root,
+    ...truckMesh.wheels,
+    bedMesh,
+    sandMesh.mesh,
+    createHopperMesh(),
+    createZoneMesh(ZONE, ZONE.radius),
+  );
 
   const dumpBed = createDumpBed({ maxAngle: 50, speed: 18 });
-  const hopper = createHopper({ rate: 50, capacity: 220 });
+  const LOAD_CAPACITY = 220;
+  const hopper = createHopper({ rate: 50, capacity: LOAD_CAPACITY });
   const spout = spoutPosition();
+  const round = createRound({ dumpAngle: DUMP_ANGLE, settleSeconds: 1.5 });
+  let loadedThisRound = 0;
+
+  const countDelivered = () => {
+    let n = 0;
+    for (const g of sand.grains) {
+      if (!g.isEnabled()) continue;
+      const t = g.translation();
+      if (t.y < 2 && Math.hypot(t.x - ZONE.x, t.z - ZONE.z) <= ZONE.radius) n++;
+    }
+    return n;
+  };
 
   const truckPose = createPoseTracker(() => ({ t: truck.body.translation(), r: truck.body.rotation() }));
   const bedPose = createPoseTracker(() => ({ t: bed.body.translation(), r: bed.body.rotation() }));
@@ -83,7 +119,7 @@ async function start() {
   window.addEventListener('keyup', (e) => keys.delete(e.code));
   window.addEventListener('blur', () => keys.clear());
 
-  function resetAll() {
+  const resetAll = () => {
     const still = { x: 0, y: 0, z: 0 };
     const identity = { x: 0, y: 0, z: 0, w: 1 };
     for (const [body, pos] of [
@@ -97,9 +133,12 @@ async function start() {
     }
     dumpBed.update(1000, -1);
     sand.clear();
+    round.reset();
+    loadedThisRound = 0;
+    resultBox.hidden = true;
     truckPose.snap();
     bedPose.snap();
-  }
+  };
   truckPose.snap();
   bedPose.snap();
 
@@ -125,13 +164,23 @@ async function start() {
       dumpBed.update(STEP, cmd.bed);
       bed.setAngle(dumpBed.angle);
 
-      const under = isUnder(bed.body.translation(), spout, HOPPER.zoneRadius) && Math.abs(truck.speedKmh()) < 3;
+      const canLoad = (round.state === 'ready' || round.state === 'loading') && loadedThisRound < LOAD_CAPACITY;
+      const under = canLoad && isUnder(bed.body.translation(), spout, HOPPER.zoneRadius) && Math.abs(truck.speedKmh()) < 3;
       const n = hopper.update(STEP, under);
-      for (let k = 0; k < n; k++) sand.spawn({ x: spout.x + jitter(), y: spout.y, z: spout.z + jitter() });
+      for (let k = 0; k < n; k++) if (sand.spawn({ x: spout.x + jitter(), y: spout.y, z: spout.z + jitter() })) loadedThisRound++;
 
       truck.controller.updateVehicle(STEP);
       world.step();
       sand.recycle();
+
+      const bedPos = bed.body.translation();
+      round.update(STEP, {
+        loaded: loadedThisRound,
+        delivered: round.state === 'settling' ? countDelivered() : 0,
+        bedUnderHopper: isUnder(bedPos, spout, HOPPER.zoneRadius),
+        bedInZone: Math.hypot(bedPos.x - ZONE.x, bedPos.z - ZONE.z) <= ZONE.radius + 1,
+        bedAngle: dumpBed.angle,
+      });
 
       truckPose.afterStep();
       bedPose.afterStep();
@@ -162,8 +211,18 @@ async function start() {
 
     const speed = Math.abs(truck.speedKmh()).toFixed(0);
     hud.textContent =
-      `${speed} km/j · bak ${dumpBed.angle.toFixed(0)}° · pasir ${sand.activeCount()}` +
-      `  |  WASD jalan · Spasi rem · E/Q angkat/turunkan bak · R reset`;
+      `${speed} km/j · bak ${dumpBed.angle.toFixed(0)}°` +
+      `  |  WASD jalan · Spasi rem · E/Q angkat/turunkan bak · R ulang`;
+    status.textContent = `⏱ ${round.seconds.toFixed(1)} s · muatan ${loadedThisRound} · ${STATE_TEXT[round.state]}`;
+    if (round.result && resultBox.hidden) {
+      const r = round.result;
+      resultBox.innerHTML =
+        `<div class="rank">${r.rank}</div>` +
+        `<div>${r.percent}% pasir sampai · ${round.seconds.toFixed(1)} s</div>` +
+        `<div>Skor ${r.total} <small>(${r.percent * 10} + bonus waktu ${r.timeBonus})</small></div>` +
+        `<div class="hint">Tekan R untuk main lagi</div>`;
+      resultBox.hidden = false;
+    }
 
     followSun(root.position);
     renderer.render(scene, camera);
