@@ -16,7 +16,7 @@ const MAX_NAME = 12;
 
 export function sanitizeName(raw: string): string {
   const name = raw.trim().slice(0, MAX_NAME);
-  return name || 'Sopir';
+  return name || 'Driver';
 }
 
 /** Insert and keep the best MAX_SCORES, best first; ties keep the older entry ahead. */

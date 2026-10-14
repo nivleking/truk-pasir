@@ -109,16 +109,16 @@ export function createLoader(
       return { x: t.x + off.x, y: t.y + off.y, z: t.z + off.z };
     },
     dumpAngle: () => Math.max(0, tiltState.angle),
-    actuatorText: () => `lengan ${armState.angle.toFixed(0)}° · sendok ${tiltState.angle.toFixed(0)}°`,
+    actuatorText: () => `arm ${armState.angle.toFixed(0)}° · bucket ${tiltState.angle.toFixed(0)}°`,
     resetActuators() {
       armState.update(1000, -1);
       tiltState.update(1000, -1);
       apply();
     },
     hints: {
-      hauling: 'Bawa ke lubang tuang, angkat sendok di atas lubang, lalu tuang (X)',
-      dumping: 'Menuang! Tarik sendok kembali (Z) kalau sudah kosong',
-      keys: 'E/Q lengan · X/Z tuang/tarik sendok',
+      hauling: 'Drive to the pit, lift the bucket over it, then tip it (X)',
+      dumping: 'Dumping! Pull the bucket back (Z) once it is empty',
+      keys: 'E/Q arm · X/Z tip/curl bucket',
     },
   };
 }

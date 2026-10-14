@@ -45,16 +45,16 @@ function stateText(state: RoundState, v: Vehicle): string {
   switch (state) {
     case 'ready':
       return v.info.kind === 'loader'
-        ? 'Isi pasir: angkat lengan (E) dan berhenti dengan sendok di bawah corong'
-        : 'Isi pasir: berhenti dengan bak di bawah corong';
+        ? 'Load up: raise the arm (E) and stop with the bucket under the hopper'
+        : 'Load up: stop with the bed under the hopper';
     case 'loading':
-      return 'Mengisi pasir...';
+      return 'Loading sand...';
     case 'hauling':
       return v.hints.hauling;
     case 'dumping':
       return v.hints.dumping;
     case 'settling':
-      return 'Menghitung pasir...';
+      return 'Counting sand...';
     case 'finished':
       return 'Selesai!';
   }
@@ -394,14 +394,14 @@ async function start() {
 
     const speed = Math.abs(chassis.speedKmh()).toFixed(0);
     hud.textContent =
-      `${vehicle.info.name} · ${speed} km/j · ${vehicle.actuatorText()}` +
-      `  |  WASD jalan · Spasi rem · ${vehicle.hints.keys}${slots.length > 1 ? ' · Tab ganti kendaraan' : ''} · R ulang · M menu`;
+      `${vehicle.info.name} · ${speed} km/h · ${vehicle.actuatorText()}` +
+      `  |  WASD drive · Space brake · ${vehicle.hints.keys}${slots.length > 1 ? ' · Tab switch vehicle' : ''} · R restart · M menu`;
     const teamHint =
       slots.length > 1 && round.state === 'settling'
-        ? 'Tab ke loader untuk korek sisa pasir ke lubang, tekan Enter kalau sudah selesai'
+        ? 'Tab to the loader to scrape leftover sand into the pit, press Enter when done'
         : stateText(round.state, truck);
     status.textContent =
-      `⏱ ${round.seconds.toFixed(1)} s · muatan ${loadedThisRound}/${truck.info.capacity} · ${teamHint}`;
+      `⏱ ${round.seconds.toFixed(1)} s · load ${loadedThisRound}/${truck.info.capacity} · ${teamHint}`;
     if (round.result && !scoreSaved) {
       scoreSaved = true;
       const r = round.result;
@@ -426,10 +426,10 @@ async function start() {
       resultBox.innerHTML =
         `<div class="rank">${r.rank}</div>` +
         `<div class="stars">${'★'.repeat(earned)}${'☆'.repeat(3 - earned)} · ${level.name}</div>` +
-        `<div>${r.percent}% pasir sampai · ${round.seconds.toFixed(1)} s · ${truck.info.name}${slots.length > 1 ? ' + loader' : ''}</div>` +
-        `<div>Skor ${r.total} <small>(${r.percent * 10} + bonus waktu ${r.timeBonus})</small></div>` +
-        (place > 0 ? `<div class="place">Peringkat #${place} di high score, ${playerName}!</div>` : '') +
-        `<div class="hint">R main lagi${nextOpen ? ' · N level berikutnya' : ''} · M menu</div>`;
+        `<div>${r.percent}% sand delivered · ${round.seconds.toFixed(1)} s · ${truck.info.name}${slots.length > 1 ? ' + loader' : ''}</div>` +
+        `<div>Score ${r.total} <small>(${r.percent * 10} + time bonus ${r.timeBonus})</small></div>` +
+        (place > 0 ? `<div class="place">#${place} on the leaderboard, ${playerName}!</div>` : '') +
+        `<div class="hint">R play again${nextOpen ? ' · N next level' : ''} · M menu</div>`;
       resultBox.hidden = false;
     }
 

@@ -40,7 +40,7 @@ export function createMenu(opts: {
     (v) =>
       `<button type="button" class="vehicle" data-id="${v.id}">` +
       `<strong>${v.name}</strong><span>${v.description}</span>` +
-      `<em>MUATAN ${v.capacity}</em><div class="bar"><i style="width:${Math.round((v.capacity / maxCapacity) * 100)}%"></i></div></button>`,
+      `<em>LOAD ${v.capacity}</em><div class="bar"><i style="width:${Math.round((v.capacity / maxCapacity) * 100)}%"></i></div></button>`,
   ).join('');
   const markSelected = () =>
     picker.querySelectorAll<HTMLButtonElement>('.vehicle').forEach((b) => b.classList.toggle('selected', b.dataset.id === selected));
@@ -69,8 +69,8 @@ export function createMenu(opts: {
       return (
         `<button type="button" class="vehicle${l.id === level ? ' selected' : ''}" data-id="${l.id}"${open ? '' : ' disabled'}>` +
         `<span class="num">${i + 1}</span><strong>${l.name.replace(/^\d+\.\s*/, '')}</strong>` +
-        `<span>${open ? l.description : 'Dapatkan 1 bintang di lokasi sebelumnya untuk membuka.'}</span>` +
-        `<em>${open ? stars(progress[l.id] ?? 0) : 'TERKUNCI'}</em></button>`
+        `<span>${open ? l.description : 'Earn 1 star on the previous site to unlock.'}</span>` +
+        `<em>${open ? stars(progress[l.id] ?? 0) : 'LOCKED'}</em></button>`
       );
     }).join('');
   }
@@ -100,7 +100,7 @@ export function createMenu(opts: {
               `<td>${s.percent}%</td><td>${s.seconds.toFixed(1)} s</td><td>${s.date}</td></tr>`,
           )
           .join('')
-      : `<tr><td colspan="8" class="empty">Papan masih kosong. Jadi sopir pertama yang tercatat.</td></tr>`;
+      : `<tr><td colspan="8" class="empty">The board is empty. Be the first driver on it.</td></tr>`;
   }
 
   const play = () => opts.onPlay(name.value, selected, helper.checked, level);

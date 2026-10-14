@@ -24,7 +24,7 @@ export interface Level {
   description: string;
   spawn: Point;
   hopper: Point;
-  /** Center of the dump pit (lubang tuang). */
+  /** Center of the dump pit. */
   pit: Point;
   bumps: { seed: number; count: number; corridorHalfWidth: number };
   obstacles: Obstacle[];
@@ -46,8 +46,8 @@ const hump = (x: number, z: number, halfWidth: number, tiltDeg = 10): Obstacle[]
 export const LEVELS: readonly Level[] = [
   {
     id: 'latihan',
-    name: '1. Latihan',
-    description: 'Jalan lurus dengan sedikit gundukan. Kenalan dengan truknya.',
+    name: '1. Training',
+    description: 'A straight road with a few bumps. Get to know your truck.',
     spawn: { x: 0, z: 0 },
     hopper: { x: 0, z: 22 },
     pit: { x: 26, z: -20 },
@@ -58,7 +58,7 @@ export const LEVELS: readonly Level[] = [
   {
     id: 'slalom',
     name: '2. Slalom',
-    description: 'Tembok beton zig-zag dan kerucut di jalan. Hati-hati bawa muatan.',
+    description: 'Zig-zag concrete walls and cones on the road. Mind your load.',
     spawn: { x: -35, z: -42 },
     hopper: { x: -35, z: -20 },
     pit: { x: 35, z: 40 },
@@ -79,8 +79,8 @@ export const LEVELS: readonly Level[] = [
   },
   {
     id: 'tambang',
-    name: '3. Tambang',
-    description: 'Lewati celah sempit di tembok tambang, naik turun polisi tidur, banyak gundukan.',
+    name: '3. Mine',
+    description: 'Squeeze through the gap in the mine wall, over speed humps and lots of bumps.',
     spawn: { x: 40, z: -42 },
     hopper: { x: 40, z: -20 },
     pit: { x: -35, z: 40 },

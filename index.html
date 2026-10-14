@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Truk Pasir</title>
+    <title>Sand Truck</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -117,47 +117,47 @@
     <div id="menu" hidden>
       <section class="brand">
         <div class="stripe"></div>
-        <h1>TRUK<span>PASIR</span></h1>
-        <p>Isi muatan di corong, bawa lewat jalur proyek, tumpahkan ke lubang. Jangan sampai ada yang tercecer.</p>
+        <h1>SAND<span>TRUCK</span></h1>
+        <p>Fill up at the hopper, haul it across the site, dump it in the pit. Don't spill a grain.</p>
         <div class="keys">
-          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>jalan dan belok</span>
-          <span><kbd>Spasi</kbd></span><span>rem</span>
-          <span><kbd>E</kbd><kbd>Q</kbd></span><span>angkat / turunkan bak atau lengan</span>
-          <span><kbd>X</kbd><kbd>Z</kbd></span><span>tuang / tarik sendok loader</span>
-          <span><kbd>Tab</kbd><kbd>Enter</kbd></span><span>ganti kendaraan / selesai (mode tim)</span>
-          <span><kbd>Drag</kbd><kbd>C</kbd></span><span>lihat sekeliling / reset kamera</span>
-          <span><kbd>R</kbd><kbd>M</kbd></span><span>ulang / menu</span>
+          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>drive and steer</span>
+          <span><kbd>Space</kbd></span><span>brake</span>
+          <span><kbd>E</kbd><kbd>Q</kbd></span><span>raise / lower bed or arm</span>
+          <span><kbd>X</kbd><kbd>Z</kbd></span><span>tip / curl loader bucket</span>
+          <span><kbd>Tab</kbd><kbd>Enter</kbd></span><span>switch vehicle / finish (team mode)</span>
+          <span><kbd>Drag</kbd><kbd>C</kbd></span><span>look around / reset camera</span>
+          <span><kbd>R</kbd><kbd>M</kbd></span><span>restart / menu</span>
         </div>
       </section>
 
       <div class="sheet">
         <div id="menu-main">
-          <header><h2>Surat Jalan</h2><small>Proyek Urugan</small></header>
+          <header><h2>Work Order</h2><small>Landfill Project</small></header>
           <div class="field">
-            <label for="player-name">Sopir</label>
-            <input id="player-name" maxlength="12" autocomplete="off" placeholder="Nama kamu" />
+            <label for="player-name">Driver</label>
+            <input id="player-name" maxlength="12" autocomplete="off" placeholder="Your name" />
           </div>
           <div class="field">
-            <span class="label">Lokasi</span>
+            <span class="label">Site</span>
             <div id="level-picker"></div>
           </div>
           <div class="field">
-            <span class="label">Armada</span>
+            <span class="label">Fleet</span>
             <div id="vehicle-picker"></div>
-            <label id="helper-row" class="helper"><input type="checkbox" id="helper-loader" /> Bawa wheel loader untuk korek sisa pasir</label>
+            <label id="helper-row" class="helper"><input type="checkbox" id="helper-loader" /> Bring a wheel loader to scrape up leftover sand</label>
           </div>
           <div class="actions">
-            <button id="btn-play" class="primary">Berangkat</button>
-            <button id="btn-scores">Rekor</button>
+            <button id="btn-play" class="primary">Roll Out</button>
+            <button id="btn-scores">Records</button>
           </div>
         </div>
         <div id="menu-scores" hidden>
-          <header><h2>Papan Rekor</h2><small>10 terbaik</small></header>
+          <header><h2>Leaderboard</h2><small>Top 10</small></header>
           <table>
-            <thead><tr><th>#</th><th>Sopir</th><th>Skor</th><th>Lokasi</th><th>Armada</th><th>Sampai</th><th>Waktu</th><th>Tanggal</th></tr></thead>
+            <thead><tr><th>#</th><th>Driver</th><th>Score</th><th>Site</th><th>Fleet</th><th>Delivered</th><th>Time</th><th>Date</th></tr></thead>
             <tbody id="score-rows"></tbody>
           </table>
-          <div class="actions"><button id="btn-back">Kembali</button></div>
+          <div class="actions"><button id="btn-back">Back</button></div>
         </div>
       </div>
     </div>

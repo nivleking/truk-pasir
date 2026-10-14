@@ -80,16 +80,16 @@ export function createDumpTruck(
       return bed.translation();
     },
     dumpAngle: () => state.angle,
-    actuatorText: () => `bak ${state.angle.toFixed(0)}°`,
+    actuatorText: () => `bed ${state.angle.toFixed(0)}°`,
     resetActuators() {
       state.update(1000, -1);
       hinge.setRad(0);
       tailgate.setEnabled(true);
     },
     hints: {
-      hauling: 'Mundur sampai roda kena pembatas kuning lubang tuang, lalu angkat bak (E)',
-      dumping: 'Menuang! Tahan E untuk menggetarkan bak, Q kalau sudah kosong',
-      keys: 'E/Q angkat/turunkan bak',
+      hauling: 'Reverse until the wheels touch the yellow pit wall, then raise the bed (E)',
+      dumping: 'Dumping! Hold E to shake the bed, Q once it is empty',
+      keys: 'E/Q raise/lower bed',
     },
   };
 }

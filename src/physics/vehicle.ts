@@ -35,7 +35,7 @@ export interface Vehicle {
   carrierCenter(): RAPIER.Vector;
   /** Degrees the carrier is tipped for dumping; 0 = carrying position. */
   dumpAngle(): number;
-  /** Text for the HUD, e.g. "bak 20°". */
+  /** Text for the HUD, e.g. "bed 20°". */
   actuatorText(): string;
   resetActuators(): void;
   /** HUD hints */

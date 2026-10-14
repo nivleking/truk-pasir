@@ -1,7 +1,7 @@
 import type RAPIER from '@dimforge/rapier3d-compat';
 import type { Rapier } from './world';
 
-/** Sand hopper (corong) the truck drives under. Spout position is where grains appear. */
+/** Sand hopper the truck drives under. Spout position is where grains appear. */
 export const HOPPER = {
   spoutHeight: 5.2,
   legHalfSpacing: 2.6,

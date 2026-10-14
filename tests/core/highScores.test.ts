@@ -8,8 +8,8 @@ describe('sanitizeName', () => {
     expect(sanitizeName('   Kelvin Sidharta Sie  ')).toBe('Kelvin Sidha');
   });
 
-  it('falls back to "Sopir" when empty', () => {
-    expect(sanitizeName('   ')).toBe('Sopir');
+  it('falls back to "Driver" when empty', () => {
+    expect(sanitizeName('   ')).toBe('Driver');
   });
 });
 
