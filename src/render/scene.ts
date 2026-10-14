@@ -1,10 +1,12 @@
 import * as THREE from 'three';
+import { BERM_HEIGHT, MAP_HALF_SIZE } from '../physics/world';
 
 export interface SceneHandles {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
-  placeholderTruck: THREE.Mesh;
+  /** Keep the shadow area centered on the truck. */
+  followSun(target: THREE.Vector3): void;
 }
 
 export function createScene(container: HTMLElement): SceneHandles {
@@ -12,6 +14,7 @@ export function createScene(container: HTMLElement): SceneHandles {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -26,7 +29,15 @@ export function createScene(container: HTMLElement): SceneHandles {
   const sun = new THREE.DirectionalLight(0xffffff, 1.6);
   sun.position.set(20, 30, 10);
   sun.castShadow = true;
-  scene.add(sun);
+  // Tight shadow box that follows the truck (see followSun): sharp, and no acne stripes crawling on the ground.
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -25;
+  sun.shadow.camera.right = sun.shadow.camera.top = 25;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 100;
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.05;
+  scene.add(sun, sun.target);
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
@@ -36,14 +47,34 @@ export function createScene(container: HTMLElement): SceneHandles {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Placeholder until Fase 1 brings the real (physics) truck.
-  const placeholderTruck = new THREE.Mesh(
-    new THREE.BoxGeometry(2.4, 1.6, 5),
-    new THREE.MeshStandardMaterial({ color: 0xe8b923 }),
+  // Scattered rocks give a sense of speed (thin grid lines shimmered while moving).
+  const rockCount = 120;
+  const rocks = new THREE.InstancedMesh(
+    new THREE.DodecahedronGeometry(0.35),
+    new THREE.MeshStandardMaterial({ color: 0x7d6440, flatShading: true }),
+    rockCount,
   );
-  placeholderTruck.position.y = 0.8;
-  placeholderTruck.castShadow = true;
-  scene.add(placeholderTruck);
+  const m = new THREE.Matrix4();
+  let seed = 7;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < rockCount; i++) {
+    const x = (rand() * 2 - 1) * (MAP_HALF_SIZE - 3);
+    const z = (rand() * 2 - 1) * (MAP_HALF_SIZE - 3);
+    const sc = 0.5 + rand();
+    m.compose(new THREE.Vector3(x, 0.1, z), new THREE.Quaternion(), new THREE.Vector3(sc, sc * 0.6, sc));
+    rocks.setMatrixAt(i, m);
+  }
+  rocks.receiveShadow = true;
+  scene.add(rocks);
+
+  const bermMat = new THREE.MeshStandardMaterial({ color: 0x9c7a45 });
+  const e = MAP_HALF_SIZE;
+  for (const [x, z, w, d] of [[0, e, e * 2, 2], [0, -e, e * 2, 2], [e, 0, 2, e * 2], [-e, 0, 2, e * 2]] as const) {
+    const berm = new THREE.Mesh(new THREE.BoxGeometry(w, BERM_HEIGHT, d), bermMat);
+    berm.position.set(x, BERM_HEIGHT / 2, z);
+    berm.castShadow = berm.receiveShadow = true;
+    scene.add(berm);
+  }
 
   window.addEventListener('resize', () => {
     camera.aspect = container.clientWidth / container.clientHeight;
@@ -51,5 +82,14 @@ export function createScene(container: HTMLElement): SceneHandles {
     renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  return { renderer, scene, camera, placeholderTruck };
+  const sunOffset = sun.position.clone();
+  // Snap to whole shadow-map texels so shadow edges do not swim while moving.
+  const texel = 50 / 2048;
+  const snap = (v: number) => Math.round(v / texel) * texel;
+  function followSun(target: THREE.Vector3) {
+    sun.target.position.set(snap(target.x), 0, snap(target.z));
+    sun.position.copy(sun.target.position).add(sunOffset);
+  }
+
+  return { renderer, scene, camera, followSun };
 }
