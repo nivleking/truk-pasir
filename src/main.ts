@@ -11,6 +11,7 @@ import { findLevel, inPit, isUnlocked, LEVELS, PIT, recordStars, starsFor, type 
 import { commandsFromKeys, smoothSteer, type DriveCommands } from './core/input';
 import { createRound, type RoundState } from './core/round';
 import { findVehicle, teamFor, type VehicleId } from './core/vehicles';
+import { createAudio } from './audio';
 import { createMenu } from './menu';
 import { HOPPER, spoutPosition } from './physics/hopperStructure';
 import { createLevelPhysics } from './physics/level';
@@ -209,6 +210,7 @@ async function start() {
     s.partPoses.forEach((t) => t.snap());
   };
 
+  const audio = createAudio();
   const keys = new Set<string>();
   let playerName = sanitizeName(loadName());
   let scores = loadScores();
@@ -232,6 +234,7 @@ async function start() {
       saveLevel(levelId);
       useTeam(teamFor(vehicleId, helper));
       useLevel(findLevel(levelId));
+      audio.resume();
       menu.hide();
       resetAll();
     },
@@ -241,7 +244,10 @@ async function start() {
   window.addEventListener('keydown', (e) => {
     if (menu.visible) return;
     keys.add(e.code);
+    audio.resume();
     if (e.code === 'KeyR') resetAll();
+    if (e.code === 'KeyV') audio.toggleMute();
+    if (e.code === 'KeyF') fpsOn = !fpsOn;
     if (e.code === 'KeyN' && round.result) {
       const i = LEVELS.findIndex((l) => l.id === level.id);
       const next = LEVELS[i + 1];
@@ -282,6 +288,12 @@ async function start() {
   const camTarget = new THREE.Vector3();
   const lookTarget = new THREE.Vector3();
   let camYaw = 0;
+  let camHeightY = 0;
+  let fpsOn = false;
+  let fpsAcc = 0;
+  let fpsFrames = 0;
+  let fpsText = '';
+  let worstFrame = 0;
   // Drag to look around the vehicle, wheel to zoom, C or double-click to reset.
   const orbit = createOrbit();
   const canvas = renderer.domElement;
@@ -371,6 +383,16 @@ async function start() {
     }
     sandMesh.sync(sand.grains);
 
+    let movingGrains = 0;
+    for (const g of sand.grains) if (g.isEnabled() && Math.abs(g.linvel().y) > 1.5) movingGrains++;
+    audio.update({
+      speedKmh: current().vehicle.chassis.speedKmh(),
+      throttle: cmd.throttle,
+      hydraulics: cmd.bed !== 0 || cmd.tilt !== 0,
+      movingGrains,
+      active: !menu.visible,
+    });
+
     const vehicle = current().vehicle;
     const chassis = vehicle.chassis;
     const root = current().mesh.root;
@@ -380,7 +402,15 @@ async function start() {
     const size = vehicle.config.halfExtents.z;
     euler.setFromQuaternion(root.quaternion, 'YXZ');
     camYaw = smoothAngle(camYaw, euler.y, followFactor(dt, 3));
-    lookTarget.lerp(camTarget.set(root.position.x, root.position.y + 1.2, root.position.z), followFactor(dt, 10));
+    // Height is followed much more slowly than x/z: suspension bounce and bumps were the remaining
+    // source of the small camera sway, since both the look-at point and the camera rode on them.
+    const fx = followFactor(dt, 10);
+    camHeightY += (root.position.y - camHeightY) * followFactor(dt, 1.5);
+    lookTarget.set(
+      lookTarget.x + (root.position.x - lookTarget.x) * fx,
+      camHeightY + 1.2,
+      lookTarget.z + (root.position.z - lookTarget.z) * fx,
+    );
     // Loaders get a higher camera so the bucket is visible over the cab.
     const camHeight = 2.5 + size * 0.6 + (vehicle.info.kind === 'loader' ? 2.5 : 0);
     const dist = (6 + size * 2) * orbit.zoom;
@@ -392,10 +422,21 @@ async function start() {
     camera.position.lerp(camTarget.set(clampEdge(desired.x), desired.y, clampEdge(desired.z)), followFactor(dt, 6));
     camera.lookAt(lookTarget);
 
+    // F: frame-time overlay, to tell real stutter (uneven frames) apart from camera motion.
+    fpsAcc += dt;
+    fpsFrames++;
+    worstFrame = Math.max(worstFrame, dt);
+    if (fpsAcc >= 0.5) {
+      fpsText = `${Math.round(fpsFrames / fpsAcc)} fps · worst ${(worstFrame * 1000).toFixed(0)} ms`;
+      fpsAcc = 0;
+      fpsFrames = 0;
+      worstFrame = 0;
+    }
     const speed = Math.abs(chassis.speedKmh()).toFixed(0);
     hud.textContent =
       `${vehicle.info.name} · ${speed} km/h · ${vehicle.actuatorText()}` +
-      `  |  WASD drive · Space brake · ${vehicle.hints.keys}${slots.length > 1 ? ' · Tab switch vehicle' : ''} · R restart · M menu`;
+      `  |  WASD drive · Space brake · ${vehicle.hints.keys}${slots.length > 1 ? ' · Tab switch vehicle' : ''} · V sound · R restart · M menu` +
+      (fpsOn ? `  |  ${fpsText}` : '');
     const teamHint =
       slots.length > 1 && round.state === 'settling'
         ? 'Tab to the loader to scrape leftover sand into the pit, press Enter when done'
@@ -420,6 +461,7 @@ async function start() {
       const earned = starsFor(level, r.percent, round.seconds);
       progress = recordStars(progress, level.id, earned);
       saveProgress(progress);
+      audio.chime(earned);
       const li = LEVELS.findIndex((l) => l.id === level.id);
       const nextOpen = !!LEVELS[li + 1] && isUnlocked(li + 1, progress);
       const place = r.total > 0 ? scores.findIndex((x) => x.score === r.total && x.name === playerName) + 1 : 0;
