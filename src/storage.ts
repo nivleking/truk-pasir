@@ -1,4 +1,5 @@
 import { parseScores, type HighScore } from './core/highScores';
+import { parseCareer, type Career } from './core/career';
 import { parseProgress, type Progress } from './core/levels';
 
 const SCORES_KEY = 'truk-pasir:scores';
@@ -41,3 +42,7 @@ export const saveLevel = (id: string) => write(LEVEL_KEY, id);
 const PROGRESS_KEY = 'truk-pasir:progress';
 export const loadProgress = () => parseProgress(read(PROGRESS_KEY));
 export const saveProgress = (p: Progress) => write(PROGRESS_KEY, JSON.stringify(p));
+
+const CAREER_KEY = 'truk-pasir:career';
+export const loadCareer = () => parseCareer(read(CAREER_KEY));
+export const saveCareer = (c: Career) => write(CAREER_KEY, JSON.stringify(c));

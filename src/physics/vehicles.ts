@@ -112,13 +112,20 @@ const LOADER: LoaderConfig = {
 };
 const LOADER_CAB: CabSpec = { halfWidth: 0.8, height: 1.6, halfLength: 0.7, z: -0.7 };
 
-export function createVehicle(rapier: Rapier, world: RAPIER.World, info: VehicleInfo): Vehicle {
+/** Career upgrades applied on top of a vehicle's base tuning. */
+export interface Tuning {
+  engine: number;
+  grip: number;
+}
+
+export function createVehicle(rapier: Rapier, world: RAPIER.World, info: VehicleInfo, t: Tuning = { engine: 1, grip: 0 }): Vehicle {
+  const tune = (c: ChassisConfig): ChassisConfig => ({ ...c, engineForce: c.engineForce * t.engine, frictionSlip: c.frictionSlip + t.grip });
   switch (info.id) {
     case 'mining-truck':
-      return createDumpTruck(rapier, world, info, MINING_CHASSIS, MINING_BED, MINING_CAB);
+      return createDumpTruck(rapier, world, info, tune(MINING_CHASSIS), MINING_BED, MINING_CAB);
     case 'wheel-loader':
-      return createLoader(rapier, world, info, LOADER_CHASSIS, LOADER, LOADER_CAB);
+      return createLoader(rapier, world, info, tune(LOADER_CHASSIS), LOADER, LOADER_CAB);
     default:
-      return createDumpTruck(rapier, world, info, DUMP_CHASSIS, DUMP_BED, DUMP_CAB);
+      return createDumpTruck(rapier, world, info, tune(DUMP_CHASSIS), DUMP_BED, DUMP_CAB);
   }
 }

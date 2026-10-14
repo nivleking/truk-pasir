@@ -75,13 +75,13 @@
       #menu label.helper input { width: 18px; height: 18px; accent-color: var(--rust); margin: 0; }
 
       .actions { display: flex; gap: 12px; margin-top: 20px; }
-      #menu .actions button, #btn-back { font: 400 20px 'Bungee', Impact, sans-serif; padding: 14px 22px; border: 3px solid var(--ink);
+      #menu .actions button, #btn-back, #btn-garage-back { font: 400 20px 'Bungee', Impact, sans-serif; padding: 14px 22px; border: 3px solid var(--ink);
         cursor: pointer; letter-spacing: 1px; transition: transform .08s, box-shadow .08s; }
       #menu button.primary { flex: 1; background: var(--ink); color: var(--hz); box-shadow: 5px 5px 0 var(--rust); }
       #menu button.primary:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--rust); }
       #menu button.primary:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--rust); }
-      #btn-scores, #btn-back { background: transparent; color: var(--ink); }
-      #btn-scores:hover, #btn-back:hover { background: var(--paper-2); }
+      #btn-scores, #btn-back, #btn-garage, #btn-garage-back { background: transparent; color: var(--ink); }
+      #btn-scores:hover, #btn-back:hover, #btn-garage:hover, #btn-garage-back:hover { background: var(--paper-2); }
 
       #menu table { border-collapse: collapse; width: 100%; font-size: 17px; }
       #menu th { text-align: left; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6a5d45;
@@ -92,6 +92,23 @@
       #menu td.empty { text-align: center; padding: 24px; color: #6a5d45; }
 
       #menu button.vehicle .off { opacity: .25; }
+      .sheet .wallet { font: 400 18px 'Bungee', sans-serif; color: var(--ink); letter-spacing: 0; margin-left: 6px; }
+      #menu button.vehicle.for-sale { background: repeating-linear-gradient(-45deg, #d8ccb1 0 8px, #cfc2a5 8px 16px); }
+      #menu button.vehicle.for-sale span { color: #7d7260; }
+      #menu button.vehicle .price { color: #7d7260; }
+      #menu button.vehicle .price.afford { color: var(--rust); }
+      .sheet .note { margin: 0 0 14px; font-size: 16px; line-height: 1.3; color: #4d4331; }
+      .upgrade { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px dashed #b3a588; }
+      .upgrade strong { display: block; font: 400 17px 'Bungee', sans-serif; }
+      .upgrade span { font-size: 15px; color: #6a5d45; }
+      .upgrade .pips { display: flex; gap: 4px; }
+      .upgrade .pips i { width: 18px; height: 10px; border: 2px solid var(--ink); }
+      .upgrade .pips i.on { background: var(--hz); }
+      .upgrade button { all: unset; cursor: pointer; min-width: 84px; text-align: center; padding: 8px 12px;
+        font: 400 15px 'Bungee', sans-serif; background: var(--ink); color: var(--hz); box-shadow: 3px 3px 0 var(--rust); }
+      .upgrade button:disabled { cursor: not-allowed; background: #b9ad94; color: #6a5d45; box-shadow: none; }
+      #result .pay { font: 400 22px 'Bungee', sans-serif; color: #2f7d32; }
+      @media (max-width: 560px) { .actions { flex-wrap: wrap; } #menu button.primary { flex-basis: 100%; } }
       body.in-menu #hud, body.in-menu #status { display: none; }
       #result { background: var(--paper); color: var(--ink); border-radius: 0; box-shadow: 8px 8px 0 rgba(0,0,0,.4);
         font-family: 'Barlow Condensed', sans-serif; border-top: 12px solid transparent;
@@ -133,7 +150,7 @@
 
       <div class="sheet">
         <div id="menu-main">
-          <header><h2>Work Order</h2><small>Landfill Project</small></header>
+          <header><h2>Work Order</h2><small>Wallet <b id="wallet" class="wallet">$0</b></small></header>
           <div class="field">
             <label for="player-name">Driver</label>
             <input id="player-name" maxlength="12" autocomplete="off" placeholder="Your name" />
@@ -149,8 +166,15 @@
           </div>
           <div class="actions">
             <button id="btn-play" class="primary">Roll Out</button>
+            <button id="btn-garage">Garage</button>
             <button id="btn-scores">Records</button>
           </div>
+        </div>
+        <div id="menu-garage" hidden>
+          <header><h2>Garage</h2><small>Wallet <b id="wallet-garage" class="wallet">$0</b></small></header>
+          <p class="note">Upgrades apply to every vehicle you own. Earn money by delivering sand: $2 per grain in the pit, plus $100 per star.</p>
+          <div id="upgrade-list"></div>
+          <div class="actions"><button id="btn-garage-back">Back</button></div>
         </div>
         <div id="menu-scores" hidden>
           <header><h2>Leaderboard</h2><small>Top 10</small></header>

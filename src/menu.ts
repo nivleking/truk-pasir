@@ -1,6 +1,7 @@
 import type { HighScore } from './core/highScores';
 import { findLevel, isUnlocked, LEVELS, type Progress } from './core/levels';
-import { findVehicle, VEHICLES } from './core/vehicles';
+import { buyUpgrade, buyVehicle, MAX_UPGRADE, owns, upgradeCost, UPGRADES, VEHICLE_PRICES, type Career } from './core/career';
+import { findVehicle, VEHICLES, type VehicleId } from './core/vehicles';
 
 const el = <T extends HTMLElement>(id: string) => {
   const e = document.getElementById(id);
@@ -24,11 +25,15 @@ export function createMenu(opts: {
   initialLevel: string;
   getScores: () => HighScore[];
   getProgress: () => Progress;
+  getCareer: () => Career;
+  setCareer: (c: Career) => void;
   onPlay: (name: string, vehicleId: string, helper: boolean, levelId: string) => void;
 }): Menu {
   const menu = el<HTMLDivElement>('menu');
   const main = el<HTMLDivElement>('menu-main');
   const scores = el<HTMLDivElement>('menu-scores');
+  const garage = el<HTMLDivElement>('menu-garage');
+  const money = (n: number) => '$' + n.toLocaleString('en-US');
   const name = el<HTMLInputElement>('player-name');
   const table = el<HTMLTableSectionElement>('score-rows');
   name.value = opts.initialName;
@@ -36,27 +41,68 @@ export function createMenu(opts: {
   const picker = el<HTMLDivElement>('vehicle-picker');
   let selected = findVehicle(opts.initialVehicle).id as string;
   const maxCapacity = Math.max(...VEHICLES.map((v) => v.capacity));
-  picker.innerHTML = VEHICLES.map(
-    (v) =>
-      `<button type="button" class="vehicle" data-id="${v.id}">` +
-      `<strong>${v.name}</strong><span>${v.description}</span>` +
-      `<em>LOAD ${v.capacity}</em><div class="bar"><i style="width:${Math.round((v.capacity / maxCapacity) * 100)}%"></i></div></button>`,
-  ).join('');
-  const markSelected = () =>
-    picker.querySelectorAll<HTMLButtonElement>('.vehicle').forEach((b) => b.classList.toggle('selected', b.dataset.id === selected));
+  function renderVehicles() {
+    const c = opts.getCareer();
+    if (!owns(c, selected as VehicleId)) selected = 'dump-truck';
+    picker.innerHTML = VEHICLES.map((v) => {
+      const have = owns(c, v.id);
+      const price = VEHICLE_PRICES[v.id];
+      const foot = have
+        ? `<em>LOAD ${v.capacity}</em><div class="bar"><i style="width:${Math.round((v.capacity / maxCapacity) * 100)}%"></i></div>`
+        : `<em class="price${c.money >= price ? ' afford' : ''}">${c.money >= price ? 'BUY ' : 'LOCKED · '}${money(price)}</em>`;
+      return (
+        `<button type="button" class="vehicle${have ? '' : ' for-sale'}${v.id === selected ? ' selected' : ''}" data-id="${v.id}">` +
+        `<strong>${v.name}</strong><span>${v.description}</span>${foot}</button>`
+      );
+    }).join('');
+    wallet.forEach((w) => (w.textContent = money(c.money)));
+    syncHelper();
+  }
   picker.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.vehicle');
-    if (!b?.dataset.id) return;
-    selected = b.dataset.id;
-    markSelected();
+    const id = b?.dataset.id as VehicleId | undefined;
+    if (!id) return;
+    const c = opts.getCareer();
+    if (!owns(c, id)) {
+      const bought = buyVehicle(c, id);
+      if (!bought) return;
+      opts.setCareer(bought);
+    }
+    selected = id;
+    renderVehicles();
   });
-  markSelected();
+  const wallet = [el('wallet'), el('wallet-garage')];
+
+  const upgradeList = el<HTMLDivElement>('upgrade-list');
+  function renderGarage() {
+    const c = opts.getCareer();
+    upgradeList.innerHTML = UPGRADES.map((u) => {
+      const level = c.upgrades[u.id];
+      const maxed = level >= MAX_UPGRADE;
+      const cost = upgradeCost(u.id, level);
+      const pips = Array.from({ length: MAX_UPGRADE }, (_, i) => `<i class="${i < level ? 'on' : ''}"></i>`).join('');
+      return (
+        `<div class="upgrade"><div><strong>${u.name}</strong><span>${u.effect} per level</span></div>` +
+        `<div class="pips">${pips}</div>` +
+        `<button type="button" data-id="${u.id}"${maxed || c.money < cost ? ' disabled' : ''}>${maxed ? 'MAX' : money(cost)}</button></div>`
+      );
+    }).join('');
+    wallet.forEach((w) => (w.textContent = money(c.money)));
+  }
+  upgradeList.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-id]');
+    if (!b || b.disabled) return;
+    const next = buyUpgrade(opts.getCareer(), b.dataset.id as (typeof UPGRADES)[number]['id']);
+    if (next) opts.setCareer(next);
+    renderGarage();
+  });
   const helper = el<HTMLInputElement>('helper-loader');
   helper.checked = opts.initialHelper;
   const helperRow = el<HTMLLabelElement>('helper-row');
-  const syncHelper = () => (helperRow.hidden = findVehicle(selected).kind !== 'dump');
-  picker.addEventListener('click', syncHelper);
-  syncHelper();
+  const syncHelper = () => {
+    const c = opts.getCareer();
+    helperRow.hidden = findVehicle(selected).kind !== 'dump' || !owns(c, 'wheel-loader');
+  };
 
   const levelPicker = el<HTMLDivElement>('level-picker');
   let level = findLevel(opts.initialLevel).id;
@@ -81,10 +127,12 @@ export function createMenu(opts: {
     renderLevels();
   });
 
-  const showPage = (page: 'main' | 'scores') => {
+  const showPage = (page: 'main' | 'scores' | 'garage') => {
     main.hidden = page !== 'main';
     scores.hidden = page !== 'scores';
+    garage.hidden = page !== 'garage';
     if (page === 'scores') renderScores();
+    else if (page === 'garage') renderGarage();
     else name.focus();
   };
 
@@ -110,12 +158,15 @@ export function createMenu(opts: {
   });
   el('btn-scores').addEventListener('click', () => showPage('scores'));
   el('btn-back').addEventListener('click', () => showPage('main'));
+  el('btn-garage').addEventListener('click', () => showPage('garage'));
+  el('btn-garage-back').addEventListener('click', () => showPage('main'));
 
   return {
     show() {
       menu.hidden = false;
       document.body.classList.add('in-menu');
       renderLevels();
+      renderVehicles();
       showPage('main');
     },
     hide() {

@@ -7,6 +7,7 @@ import { isOutOfBounds } from './core/drive';
 import { createFixedStep } from './core/fixedStep';
 import { addScore, sanitizeName } from './core/highScores';
 import { createHopper, isUnder } from './core/hopper';
+import { earnings, owns, tuning } from './core/career';
 import { findLevel, inPit, isUnlocked, LEVELS, PIT, recordStars, starsFor, type Level } from './core/levels';
 import { commandsFromKeys, smoothSteer, type DriveCommands } from './core/input';
 import { createRound, type RoundState } from './core/round';
@@ -24,12 +25,14 @@ import { createScene } from './render/scene';
 import { createVehicleMesh, type VehicleMesh } from './render/vehicleMesh';
 import { createLevelMesh } from './render/levelMesh';
 import {
+  loadCareer,
   loadHelper,
   loadLevel,
   loadName,
   loadProgress,
   loadScores,
   loadVehicle,
+  saveCareer,
   saveHelper,
   saveLevel,
   saveName,
@@ -166,7 +169,8 @@ async function start() {
   const current = () => slots[active]!;
 
   function useTeam(ids: VehicleId[]) {
-    const key = ids.join('+');
+    const t = tuning(career);
+    const key = ids.join('+') + JSON.stringify(t);
     if (key === teamKey) return;
     teamKey = key;
     for (const s of slots) {
@@ -176,7 +180,8 @@ async function start() {
       s.mesh.dispose();
     }
     slots = ids.map((id, i) => {
-      const vehicle = createVehicle(rapier, world, findVehicle(id));
+      const base = findVehicle(id);
+      const vehicle = createVehicle(rapier, world, { ...base, capacity: Math.round(base.capacity * t.capacity) }, t);
       const mesh = createVehicleMesh(vehicle);
       scene.add(mesh.root, ...mesh.wheels, ...mesh.parts);
       return {
@@ -216,7 +221,11 @@ async function start() {
   let scores = loadScores();
   let scoreSaved = false;
   let progress = loadProgress();
-  useTeam(teamFor(findVehicle(loadVehicle()).id, loadHelper()));
+  let career = loadCareer();
+  // Only vehicles you own can be driven; the helper loader has to be owned too.
+  const teamOf = (id: string, helper: boolean) =>
+    teamFor(owns(career, findVehicle(id).id) ? id : 'dump-truck', helper && owns(career, 'wheel-loader'));
+  useTeam(teamOf(loadVehicle() ?? 'dump-truck', loadHelper()));
   useLevel(level);
 
   const menu = createMenu({
@@ -226,13 +235,18 @@ async function start() {
     initialLevel: level.id,
     getScores: () => scores,
     getProgress: () => progress,
+    getCareer: () => career,
+    setCareer: (c) => {
+      career = c;
+      saveCareer(c);
+    },
     onPlay: (raw, vehicleId, helper, levelId) => {
       playerName = sanitizeName(raw);
       saveName(playerName);
       saveVehicle(vehicleId);
       saveHelper(helper);
       saveLevel(levelId);
-      useTeam(teamFor(vehicleId, helper));
+      useTeam(teamOf(vehicleId, helper));
       useLevel(findLevel(levelId));
       audio.resume();
       menu.hide();
@@ -462,6 +476,9 @@ async function start() {
       progress = recordStars(progress, level.id, earned);
       saveProgress(progress);
       audio.chime(earned);
+      const pay = earnings(countDelivered(), earned);
+      career = { ...career, money: career.money + pay };
+      saveCareer(career);
       const li = LEVELS.findIndex((l) => l.id === level.id);
       const nextOpen = !!LEVELS[li + 1] && isUnlocked(li + 1, progress);
       const place = r.total > 0 ? scores.findIndex((x) => x.score === r.total && x.name === playerName) + 1 : 0;
@@ -470,6 +487,7 @@ async function start() {
         `<div class="stars">${'★'.repeat(earned)}${'☆'.repeat(3 - earned)} · ${level.name}</div>` +
         `<div>${r.percent}% sand delivered · ${round.seconds.toFixed(1)} s · ${truck.info.name}${slots.length > 1 ? ' + loader' : ''}</div>` +
         `<div>Score ${r.total} <small>(${r.percent * 10} + time bonus ${r.timeBonus})</small></div>` +
+        `<div class="pay">+$${pay.toLocaleString('en-US')} · wallet $${career.money.toLocaleString('en-US')}</div>` +
         (place > 0 ? `<div class="place">#${place} on the leaderboard, ${playerName}!</div>` : '') +
         `<div class="hint">R play again${nextOpen ? ' · N next level' : ''} · M menu</div>`;
       resultBox.hidden = false;
