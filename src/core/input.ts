@@ -5,6 +5,8 @@ export interface DriveCommands {
   /** -1 (right) .. 1 (left) */
   steer: number;
   handbrake: boolean;
+  /** 1 raise bed, -1 lower, 0 hold */
+  bed: number;
 }
 
 const has = (keys: ReadonlySet<string>, ...codes: string[]) => codes.some((c) => keys.has(c));
@@ -19,6 +21,7 @@ export function commandsFromKeys(keys: ReadonlySet<string>): DriveCommands {
     throttle: forward - back,
     steer: left - right,
     handbrake: keys.has('Space'),
+    bed: (keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') ? 1 : 0),
   };
 }
 

@@ -11,7 +11,7 @@ export const TRUCK = {
   suspensionRest: 0.45,
   suspensionStiffness: 30,
   frictionSlip: 2.2,
-  engineForce: 24000,
+  engineForce: 32000,
   brakeForce: 400,
   coastBrake: 60,
   reverseFactor: 0.4,

@@ -6,7 +6,7 @@ export interface TruckMesh {
   wheels: THREE.Object3D[];
 }
 
-/** Box-shaped placeholder truck: cab in front, bed at the back. Swap for a glTF model later. */
+/** Box-shaped placeholder truck: chassis and cab (the bed is its own mesh, see bedMesh.ts). Swap for a glTF model later. */
 export function createTruckMesh(): TruckMesh {
   const h = TRUCK.halfExtents;
   const root = new THREE.Group();
@@ -23,10 +23,6 @@ export function createTruckMesh(): TruckMesh {
   const windshield = new THREE.Mesh(new THREE.BoxGeometry(h.x * 1.8, 0.6, 0.05), glass);
   windshield.position.set(0, h.y + 1.0, h.z + 0.01);
   root.add(windshield);
-
-  const bed = new THREE.Mesh(new THREE.BoxGeometry(h.x * 2, 1.0, 3.2), yellow);
-  bed.position.set(0, h.y + 0.5, -h.z + 1.6);
-  root.add(bed);
 
   root.traverse((o) => {
     o.castShadow = true;
