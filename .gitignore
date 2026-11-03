@@ -3,3 +3,4 @@ dist/
 .DS_Store
 coverage/
 _to_delete/
+.vercel/
