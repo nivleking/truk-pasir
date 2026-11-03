@@ -9,7 +9,7 @@ export interface Career {
 }
 
 export const MAX_UPGRADE = 3;
-export const VEHICLE_PRICES: Record<VehicleId, number> = { 'dump-truck': 0, 'wheel-loader': 1500, 'mining-truck': 3000 };
+export const VEHICLE_PRICES: Record<VehicleId, number> = { 'dump-truck': 0, 'wheel-loader': 1500, 'mining-truck': 3000, excavator: 4500 };
 export const UPGRADES: { id: UpgradeId; name: string; effect: string }[] = [
   { id: 'engine', name: 'Engine', effect: '+15% power' },
   { id: 'bed', name: 'Bigger Bed', effect: '+15% load' },
@@ -65,3 +65,6 @@ export function parseCareer(raw: string | null): Career {
     return c;
   }
 }
+
+/** Free play: every vehicle unlocked, stock tuning, no money involved. */
+export const freePlay = (): Career => ({ ...newCareer(), owned: VEHICLES.map((v) => v.id) });

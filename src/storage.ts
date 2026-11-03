@@ -46,3 +46,13 @@ export const saveProgress = (p: Progress) => write(PROGRESS_KEY, JSON.stringify(
 const CAREER_KEY = 'truk-pasir:career';
 export const loadCareer = () => parseCareer(read(CAREER_KEY));
 export const saveCareer = (c: Career) => write(CAREER_KEY, JSON.stringify(c));
+
+export type GameMode = 'career' | 'free';
+const MODE_KEY = 'truk-pasir:mode';
+export const loadMode = (): GameMode => (read(MODE_KEY) === 'free' ? 'free' : 'career');
+export const saveMode = (m: GameMode) => write(MODE_KEY, m);
+
+export type TimeOfDay = 'day' | 'evening';
+const TIME_KEY = 'truk-pasir:time';
+export const loadTime = (): TimeOfDay => (read(TIME_KEY) === 'evening' ? 'evening' : 'day');
+export const saveTime = (t: TimeOfDay) => write(TIME_KEY, t);

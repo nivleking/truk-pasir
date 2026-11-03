@@ -26,7 +26,7 @@ export function createSandPool(rapier: Rapier, world: RAPIER.World): SandPool {
 
   for (let i = 0; i < SAND.poolSize; i++) {
     const body = world.createRigidBody(
-      rapier.RigidBodyDesc.dynamic().setTranslation(PARKED.x, PARKED.y, PARKED.z).setLinearDamping(0.1).setAngularDamping(1),
+      rapier.RigidBodyDesc.dynamic().setTranslation(PARKED.x, PARKED.y, PARKED.z).setLinearDamping(0.1).setAngularDamping(4),
     );
     world.createCollider(
       rapier.ColliderDesc.ball(SAND.radius).setDensity(SAND.density).setFriction(SAND.friction).setRestitution(0),

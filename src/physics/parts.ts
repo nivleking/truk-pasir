@@ -5,11 +5,18 @@ import type { Rapier } from './world';
 /** Box collider spec: half extents + center, in the part's local space. */
 export type Box = { hx: number; hy: number; hz: number; x: number; y: number; z: number };
 
-/** Dynamic body made of boxes with the given total mass, placed at `pos`. */
-export function createBoxBody(rapier: Rapier, world: RAPIER.World, pos: RAPIER.Vector, boxes: Box[], mass: number, friction = 0.6) {
-  const body = world.createRigidBody(
-    rapier.RigidBodyDesc.dynamic().setTranslation(pos.x, pos.y, pos.z).setCanSleep(false).setCcdEnabled(true),
-  );
+/** Dynamic (or kinematic: moved by code, pushes everything) body made of boxes with the given total mass, placed at `pos`. */
+export function createBoxBody(
+  rapier: Rapier,
+  world: RAPIER.World,
+  pos: RAPIER.Vector,
+  boxes: Box[],
+  mass: number,
+  friction = 0.6,
+  kinematic = false,
+) {
+  const desc = kinematic ? rapier.RigidBodyDesc.kinematicPositionBased() : rapier.RigidBodyDesc.dynamic().setCcdEnabled(true);
+  const body = world.createRigidBody(desc.setTranslation(pos.x, pos.y, pos.z).setCanSleep(false));
   const volume = boxes.reduce((v, b) => v + 8 * b.hx * b.hy * b.hz, 0);
   for (const b of boxes) {
     world.createCollider(

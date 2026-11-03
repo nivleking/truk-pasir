@@ -7,7 +7,16 @@ export interface SceneHandles {
   camera: THREE.PerspectiveCamera;
   /** Keep the shadow area centered on the truck. */
   followSun(target: THREE.Vector3): void;
+  /** Bright midday or a low orange evening sun with headlights. */
+  setTimeOfDay(t: 'day' | 'evening'): void;
+  /** Point the headlight beam (only lit in the evening) from a vehicle's nose. */
+  aimHeadlights(from: THREE.Vector3, to: THREE.Vector3): void;
 }
+
+const SKY = {
+  day: { sky: 0x87b5d9, sun: 0xffffff, sunI: 1.6, sunPos: [20, 30, 10], hemiSky: 0xffffff, hemiGround: 0x8a7350, hemiI: 0.8, beam: 0 },
+  evening: { sky: 0xe39a6c, sun: 0xffad6b, sunI: 1.3, sunPos: [-35, 12, -18], hemiSky: 0xffcfae, hemiGround: 0x5a4650, hemiI: 0.62, beam: 60 },
+} as const;
 
 export function createScene(container: HTMLElement): SceneHandles {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -25,7 +34,10 @@ export function createScene(container: HTMLElement): SceneHandles {
   camera.position.set(8, 6, 10);
   camera.lookAt(0, 1, 0);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7350, 0.8));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x8a7350, 0.8);
+  scene.add(hemi);
+  const beam = new THREE.SpotLight(0xfff0c8, 0, 40, 0.5, 0.6, 1.2);
+  scene.add(beam, beam.target);
   const sun = new THREE.DirectionalLight(0xffffff, 1.6);
   sun.position.set(20, 30, 10);
   sun.castShadow = true;
@@ -55,7 +67,7 @@ export function createScene(container: HTMLElement): SceneHandles {
     renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  const sunOffset = sun.position.clone();
+  let sunOffset = sun.position.clone();
   // Snap to whole shadow-map texels so shadow edges do not swim while moving.
   const texel = 50 / 2048;
   const snap = (v: number) => Math.round(v / texel) * texel;
@@ -64,5 +76,22 @@ export function createScene(container: HTMLElement): SceneHandles {
     sun.position.copy(sun.target.position).add(sunOffset);
   }
 
-  return { renderer, scene, camera, followSun };
+  function setTimeOfDay(t: 'day' | 'evening') {
+    const c = SKY[t];
+    (scene.background as THREE.Color).set(c.sky);
+    (scene.fog as THREE.Fog).color.set(c.sky);
+    sun.color.set(c.sun);
+    sun.intensity = c.sunI;
+    sunOffset = new THREE.Vector3(...c.sunPos);
+    hemi.color.set(c.hemiSky);
+    hemi.groundColor.set(c.hemiGround);
+    hemi.intensity = c.hemiI;
+    beam.intensity = c.beam;
+  }
+  function aimHeadlights(from: THREE.Vector3, to: THREE.Vector3) {
+    beam.position.copy(from);
+    beam.target.position.copy(to);
+  }
+
+  return { renderer, scene, camera, followSun, setTimeOfDay, aimHeadlights };
 }

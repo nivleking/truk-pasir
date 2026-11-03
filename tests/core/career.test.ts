@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  newCareer, parseCareer, earnings, buyVehicle, buyUpgrade, upgradeCost, tuning, owns, VEHICLE_PRICES, MAX_UPGRADE,
+  freePlay, newCareer, parseCareer, earnings, buyVehicle, buyUpgrade, upgradeCost, tuning, owns, VEHICLE_PRICES, MAX_UPGRADE,
 } from '../../src/core/career';
 
 describe('career', () => {
@@ -48,5 +48,14 @@ describe('career', () => {
     expect(owns(c, 'dump-truck')).toBe(true);
     expect(c.owned).not.toContain('bogus');
     expect(c.upgrades).toEqual({ engine: MAX_UPGRADE, bed: 0, tires: 0 });
+  });
+});
+
+describe('free play', () => {
+  it('owns every vehicle, has no upgrades and no money', () => {
+    const f = freePlay();
+    expect(f.money).toBe(0);
+    for (const id of ['dump-truck', 'mining-truck', 'wheel-loader'] as const) expect(owns(f, id)).toBe(true);
+    expect(tuning(f)).toEqual({ engine: 1, capacity: 1, grip: 0 });
   });
 });

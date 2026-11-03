@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rotateByQuat, yawTiltQuat } from '../../src/core/quat';
+import { axisAngle, mulQuat, rotateByQuat, yawTiltQuat } from '../../src/core/quat';
 
 describe('rotateByQuat', () => {
   it('identity leaves the vector unchanged', () => {
@@ -30,5 +30,13 @@ describe('yawTiltQuat', () => {
   it('yaw 90 turns +Z toward +X', () => {
     const v = rotateByQuat({ x: 0, y: 0, z: 1 }, yawTiltQuat(90, 0));
     expect(v.x).toBeCloseTo(1);
+  });
+});
+
+describe('quat helpers', () => {
+  it('composes rotations: yaw 90 then tilt 30 equals yawTiltQuat', () => {
+    const q = mulQuat(axisAngle('y', Math.PI / 2), axisAngle('x', (-30 * Math.PI) / 180));
+    const r = yawTiltQuat(90, 30);
+    for (const k of ['x', 'y', 'z', 'w'] as const) expect(q[k]).toBeCloseTo(r[k]);
   });
 });

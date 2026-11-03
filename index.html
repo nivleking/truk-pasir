@@ -57,6 +57,7 @@
       #menu input#player-name:focus { border-bottom-color: var(--rust); }
 
       #level-picker, #vehicle-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      #vehicle-picker { grid-template-columns: repeat(4, 1fr); }
       #menu button.vehicle { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 4px;
         padding: 10px 12px 12px; background: var(--paper-2); border: 2px solid var(--line); position: relative;
         transition: transform .08s, box-shadow .08s; }
@@ -97,6 +98,11 @@
       #menu button.vehicle.for-sale span { color: #7d7260; }
       #menu button.vehicle .price { color: #7d7260; }
       #menu button.vehicle .price.afford { color: var(--rust); }
+      .switch { display: inline-flex; border: 2px solid var(--ink); }
+      .switch button { all: unset; cursor: pointer; padding: 6px 16px; font: 400 15px 'Bungee', sans-serif; color: var(--ink); }
+      .switch button.on { background: var(--ink); color: var(--hz); }
+      .switch button:focus-visible { outline: 3px solid var(--rust); outline-offset: 2px; }
+      #mode-hint { margin: 6px 0 0; }
       .sheet .note { margin: 0 0 14px; font-size: 16px; line-height: 1.3; color: #4d4331; }
       .upgrade { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px dashed #b3a588; }
       .upgrade strong { display: block; font: 400 17px 'Bungee', sans-serif; }
@@ -109,7 +115,10 @@
       .upgrade button:disabled { cursor: not-allowed; background: #b9ad94; color: #6a5d45; box-shadow: none; }
       #result .pay { font: 400 22px 'Bungee', sans-serif; color: #2f7d32; }
       @media (max-width: 560px) { .actions { flex-wrap: wrap; } #menu button.primary { flex-basis: 100%; } }
-      body.in-menu #hud, body.in-menu #status { display: none; }
+      body.in-menu #hud, body.in-menu #status, body.in-menu #minimap { display: none; }
+      #minimap { position: fixed; right: 16px; bottom: 16px; width: 180px; height: 180px;
+        border: 3px solid #17140f; box-shadow: 4px 4px 0 rgba(0,0,0,.35); }
+      @media (max-width: 600px) { #minimap { width: 120px; height: 120px; top: 64px; bottom: auto; } }
       #result { background: var(--paper); color: var(--ink); border-radius: 0; box-shadow: 8px 8px 0 rgba(0,0,0,.4);
         font-family: 'Barlow Condensed', sans-serif; border-top: 12px solid transparent;
         border-image: repeating-linear-gradient(-45deg, var(--hz) 0 12px, var(--ink) 12px 24px) 12; }
@@ -131,6 +140,7 @@
     <div id="hud"></div>
     <div id="status"></div>
     <div id="result" hidden></div>
+    <canvas id="minimap"></canvas>
     <div id="menu" hidden>
       <section class="brand">
         <div class="stripe"></div>
@@ -139,18 +149,29 @@
         <div class="keys">
           <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>drive and steer</span>
           <span><kbd>Space</kbd></span><span>brake</span>
-          <span><kbd>E</kbd><kbd>Q</kbd></span><span>raise / lower bed or arm</span>
-          <span><kbd>X</kbd><kbd>Z</kbd></span><span>tip / curl loader bucket</span>
+          <span><kbd>E</kbd><kbd>Q</kbd></span><span>raise / lower bed, arm or boom</span>
+          <span><kbd>X</kbd><kbd>Z</kbd></span><span>tip / curl bucket</span>
+          <span><kbd>J</kbd><kbd>L</kbd><kbd>I</kbd><kbd>K</kbd></span><span>excavator swing / stick</span>
           <span><kbd>Tab</kbd><kbd>Enter</kbd></span><span>switch vehicle / finish (team mode)</span>
           <span><kbd>Drag</kbd><kbd>C</kbd></span><span>look around / reset camera</span>
           <span><kbd>R</kbd><kbd>M</kbd></span><span>restart / menu</span>
           <span><kbd>V</kbd></span><span>sound on / off</span>
+          <span><kbd>N</kbd><kbd>F</kbd></span><span>next level / frame-time overlay</span>
         </div>
       </section>
 
       <div class="sheet">
         <div id="menu-main">
-          <header><h2>Work Order</h2><small>Wallet <b id="wallet" class="wallet">$0</b></small></header>
+          <header><h2>Work Order</h2><small id="wallet-row">Wallet <b id="wallet" class="wallet">$0</b></small></header>
+          <div class="field">
+            <span class="label">Mode</span>
+            <div id="mode-switch" class="switch"><button type="button" data-mode="career">Career</button><button type="button" data-mode="free">Free Play</button></div>
+            <p id="mode-hint" class="note"></p>
+          </div>
+          <div class="field">
+            <span class="label">Time of day</span>
+            <div id="time-switch" class="switch"><button type="button" data-time="day">Day</button><button type="button" data-time="evening">Evening</button></div>
+          </div>
           <div class="field">
             <label for="player-name">Driver</label>
             <input id="player-name" maxlength="12" autocomplete="off" placeholder="Your name" />

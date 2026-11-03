@@ -1,5 +1,5 @@
 import type { HighScore } from './core/highScores';
-import { findLevel, isUnlocked, LEVELS, type Progress } from './core/levels';
+import { findLevel, LEVELS, type Progress } from './core/levels';
 import { buyUpgrade, buyVehicle, MAX_UPGRADE, owns, upgradeCost, UPGRADES, VEHICLE_PRICES, type Career } from './core/career';
 import { findVehicle, VEHICLES, type VehicleId } from './core/vehicles';
 
@@ -27,6 +27,12 @@ export function createMenu(opts: {
   getProgress: () => Progress;
   getCareer: () => Career;
   setCareer: (c: Career) => void;
+  getMode: () => 'career' | 'free';
+  setMode: (m: 'career' | 'free') => void;
+  getTime: () => 'day' | 'evening';
+  setTime: (t: 'day' | 'evening') => void;
+  /** Whether level i can be picked (career: earned by stars; free play: always). */
+  levelOpen: (i: number) => boolean;
   onPlay: (name: string, vehicleId: string, helper: boolean, levelId: string) => void;
 }): Menu {
   const menu = el<HTMLDivElement>('menu');
@@ -73,6 +79,37 @@ export function createMenu(opts: {
   });
   const wallet = [el('wallet'), el('wallet-garage')];
 
+  const modeSwitch = el<HTMLDivElement>('mode-switch');
+  function renderMode() {
+    const m = opts.getMode();
+    modeSwitch.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === m));
+    el('wallet-row').hidden = m !== 'career';
+    el('btn-garage').hidden = m !== 'career';
+    el('mode-hint').textContent =
+      m === 'career'
+        ? 'Earn money each round, buy vehicles and upgrades, unlock sites with stars.'
+        : 'Every site and vehicle open, stock trucks, no money. Just drive.';
+  }
+  modeSwitch.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-mode]');
+    if (!b) return;
+    opts.setMode(b.dataset.mode as 'career' | 'free');
+    renderMode();
+    renderLevels();
+    renderVehicles();
+  });
+
+  const timeSwitch = el<HTMLDivElement>('time-switch');
+  const renderTime = () =>
+    timeSwitch.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.time === opts.getTime()));
+  timeSwitch.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-time]');
+    if (!b) return;
+    opts.setTime(b.dataset.time as 'day' | 'evening');
+    renderTime();
+  });
+  renderTime();
+
   const upgradeList = el<HTMLDivElement>('upgrade-list');
   function renderGarage() {
     const c = opts.getCareer();
@@ -109,9 +146,9 @@ export function createMenu(opts: {
   const stars = (n: number) => '★'.repeat(n) + `<span class="off">${'★'.repeat(3 - n)}</span>`;
   function renderLevels() {
     const progress = opts.getProgress();
-    if (!LEVELS.some((l, i) => l.id === level && isUnlocked(i, progress))) level = LEVELS[0]!.id;
+    if (!LEVELS.some((l, i) => l.id === level && opts.levelOpen(i))) level = LEVELS[0]!.id;
     levelPicker.innerHTML = LEVELS.map((l, i) => {
-      const open = isUnlocked(i, progress);
+      const open = opts.levelOpen(i);
       return (
         `<button type="button" class="vehicle${l.id === level ? ' selected' : ''}" data-id="${l.id}"${open ? '' : ' disabled'}>` +
         `<span class="num">${i + 1}</span><strong>${l.name.replace(/^\d+\.\s*/, '')}</strong>` +
@@ -165,6 +202,7 @@ export function createMenu(opts: {
     show() {
       menu.hidden = false;
       document.body.classList.add('in-menu');
+      renderMode();
       renderLevels();
       renderVehicles();
       showPage('main');

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { LEVELS, findLevel, starsFor, isUnlocked, parseProgress, recordStars, PIT, groundBoxes, inPit } from '../../src/core/levels';
+import { LEVELS, findLevel, starsFor, isUnlocked, parseProgress, recordStars, PIT, groundBoxes, inPit, trackWalls, distToTrack, levelBumps, levelObstacles } from '../../src/core/levels';
 
 const inside = (p: { x: number; z: number }, margin: number) => Math.abs(p.x) <= 60 - margin && Math.abs(p.z) <= 60 - margin;
 
 describe('levels', () => {
   it('has unique ids and at least 3 levels', () => {
-    expect(LEVELS.length).toBeGreaterThanOrEqual(3);
+    expect(LEVELS.length).toBeGreaterThanOrEqual(6);
     expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
   });
   it('keeps hopper, pit and spawn inside the map', () => {
@@ -18,6 +18,7 @@ describe('levels', () => {
   it('obstacles never block the spawn, hopper or pit', () => {
     for (const l of LEVELS)
       for (const o of l.obstacles) {
+        if (o.track) continue;
         const r = Math.hypot(o.hx, o.hz);
         expect(Math.hypot(o.x - l.spawn.x, o.z - l.spawn.z), `${l.id} spawn`).toBeGreaterThan(r + 6);
         expect(Math.hypot(o.x - l.hopper.x, o.z - l.hopper.z), `${l.id} hopper`).toBeGreaterThan(r + 4);
@@ -76,5 +77,41 @@ describe('inPit', () => {
     expect(inPit({ x: 1, y: -0.5, z: 1 }, { x: 0, z: 0 })).toBe(true);
     expect(inPit({ x: 1, y: 0.3, z: 1 }, { x: 0, z: 0 })).toBe(false);
     expect(inPit({ x: 5, y: -0.5, z: 1 }, { x: 0, z: 0 })).toBe(false);
+  });
+});
+
+describe('tracks', () => {
+  const tracked = LEVELS.filter((l) => l.track);
+  it('most levels are walled tracks', () => {
+    expect(tracked.length).toBeGreaterThanOrEqual(4);
+  });
+  it('keep spawn, hopper and the whole pit inside the walls', () => {
+    for (const l of tracked) {
+      const t = l.track!;
+      expect(distToTrack(l.spawn, t), `${l.id} spawn`).toBeLessThan(1);
+      expect(distToTrack(l.hopper, t), `${l.id} hopper`).toBeLessThan(1);
+      expect(distToTrack(l.pit, t) + PIT.half + PIT.curbWidth, `${l.id} pit`).toBeLessThan(t.halfWidth);
+    }
+  });
+  it('stay inside the map', () => {
+    for (const l of tracked)
+      for (const w of trackWalls(l.track!)) {
+        expect(Math.abs(w.x), l.id).toBeLessThan(59);
+        expect(Math.abs(w.z), l.id).toBeLessThan(59);
+      }
+  });
+  it('hand-placed obstacles and bumps sit on the road', () => {
+    for (const l of tracked) {
+      for (const o of l.obstacles) expect(distToTrack(o, l.track!), `${l.id} obstacle`).toBeLessThan(l.track!.halfWidth);
+      for (const b of levelBumps(l)) expect(distToTrack(b, l.track!), `${l.id} bump`).toBeLessThan(l.track!.halfWidth - 1);
+    }
+  });
+  it('builds side walls on both edges and caps both ends', () => {
+    const t = { points: [{ x: 0, z: 0 }, { x: 0, z: 20 }, { x: 20, z: 20 }], halfWidth: 5 };
+    const walls = trackWalls(t);
+    expect(walls.length).toBe(2 * 2 + 2);
+    const sides = walls.slice(0, 4);
+    for (const w of sides) expect(distToTrack(w, t)).toBeCloseTo(5, 5);
+    expect(levelObstacles({ ...LEVELS[0]!, track: t }).length).toBe(walls.length);
   });
 });

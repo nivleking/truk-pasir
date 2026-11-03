@@ -61,3 +61,17 @@ describe('dumpBed', () => {
     expect(arm.angle).toBe(-20);
   });
 });
+
+describe('start angle', () => {
+  it('can start between min and max', () => {
+    const b = createDumpBed({ minAngle: -10, maxAngle: 60, speed: 10, start: 30 });
+    expect(b.angle).toBe(30);
+    expect(b.state).toBe('holding');
+  });
+  it('reset goes back to the start angle', () => {
+    const b = createDumpBed({ minAngle: -10, maxAngle: 60, speed: 10, start: 30 });
+    b.update(10, 1);
+    b.reset();
+    expect(b.angle).toBe(30);
+  });
+});

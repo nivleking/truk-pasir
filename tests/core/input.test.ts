@@ -5,7 +5,7 @@ const keys = (...k: string[]) => new Set(k);
 
 describe('commandsFromKeys', () => {
   it('is idle with no keys', () => {
-    expect(commandsFromKeys(keys())).toEqual({ throttle: 0, steer: 0, handbrake: false, bed: 0, tilt: 0 });
+    expect(commandsFromKeys(keys())).toEqual({ throttle: 0, steer: 0, handbrake: false, bed: 0, tilt: 0, swing: 0, stick: 0 });
   });
 
   it('W accelerates, S reverses', () => {
@@ -57,5 +57,14 @@ describe('smoothSteer', () => {
 
   it('returns to center when target is 0', () => {
     expect(smoothSteer(-0.5, 0, 0.1, 2)).toBeCloseTo(-0.3);
+  });
+});
+
+describe('excavator keys', () => {
+  it('J/L swing the house, I/K move the stick', () => {
+    expect(commandsFromKeys(keys('KeyJ')).swing).toBe(1);
+    expect(commandsFromKeys(keys('KeyL')).swing).toBe(-1);
+    expect(commandsFromKeys(keys('KeyI')).stick).toBe(1);
+    expect(commandsFromKeys(keys('KeyK')).stick).toBe(-1);
   });
 });

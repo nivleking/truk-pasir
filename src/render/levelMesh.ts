@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Bump } from '../core/bumps';
-import { groundBoxes, PIT, type Level } from '../core/levels';
+import { digSite } from '../core/excavator';
+import { groundBoxes, levelObstacles, PIT, type Level } from '../core/levels';
 import { yawTiltQuat } from '../core/quat';
 import { MAP_HALF_SIZE } from '../physics/world';
 import { createBumpMesh } from './bumpMesh';
@@ -9,7 +10,7 @@ import { createHopperMesh } from './hopperMesh';
 const COLORS = { ground: 0xc9a66b, floor: 0x6e5432, wall: 0x7a5d38, curb: 0xe8c22a } as const;
 
 /** Ground with the dump pit, obstacles, hopper, bumps and decoration rocks for one level. */
-export function createLevelMesh(level: Level, bumps: Bump[]): { group: THREE.Group; dispose(): void } {
+export function createLevelMesh(level: Level, bumps: Bump[], dig = false): { group: THREE.Group; dispose(): void } {
   const group = new THREE.Group();
   const mats = new Map<number, THREE.MeshStandardMaterial>();
   const mat = (color: number) => {
@@ -36,7 +37,7 @@ export function createLevelMesh(level: Level, bumps: Bump[]): { group: THREE.Gro
   }
 
   const q = new THREE.Quaternion();
-  for (const o of level.obstacles) {
+  for (const o of levelObstacles(level)) {
     const r = yawTiltQuat(o.yaw ?? 0, o.tilt ?? 0);
     q.set(r.x, r.y, r.z, r.w);
     if (o.kind === 'cone') {
@@ -46,12 +47,14 @@ export function createLevelMesh(level: Level, bumps: Bump[]): { group: THREE.Gro
       group.add(cone);
       continue;
     }
-    const m = box(o.hx, o.h / 2, o.hz, o.kind === 'wall' ? 0xa7a7a0 : 0x8f6b3e);
+    const m = box(o.hx, o.h / 2, o.hz, o.track ? 0x8a6a42 : o.kind === 'wall' ? 0xa7a7a0 : 0x8f6b3e);
     m.position.set(o.x, o.kind === 'ramp' ? 0 : o.h / 2, o.z);
     m.quaternion.copy(q);
   }
 
-  group.add(createHopperMesh(level.hopper), createBumpMesh(bumps));
+  group.add(createBumpMesh(bumps));
+  if (!dig) group.add(createHopperMesh(level.hopper));
+  else for (const w of digSite(level.hopper).walls) box(w.hx, w.h / 2, w.hz, 0xa7a7a0).position.set(w.x, w.h / 2, w.z);
 
   // Flag next to the pit.
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4), mat(0xdddddd));

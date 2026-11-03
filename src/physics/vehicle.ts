@@ -38,6 +38,8 @@ export interface Vehicle {
   /** Text for the HUD, e.g. "bed 20°". */
   actuatorText(): string;
   resetActuators(): void;
+  /** Optional per-step help with the sand (the excavator's bucket draws loose grains in while it curls). */
+  assistSand?(grains: RAPIER.RigidBody[], cmd: DriveCommands): void;
   /** HUD hints */
   hints: { hauling: string; dumping: string; keys: string };
 }
